@@ -2,8 +2,8 @@
   (:require [bantu.common :refer [html-str]]
             [cheshire.core :as json]
             [clojure.core.match :as match]
-            [clojure.string :as str]
-            [org.httpkit.server :refer [as-channel run-server send!]]))
+            [clojure.string :as str] 
+            [org.httpkit.server :refer [as-channel send!]]))
 
 (def port 4242)
 (def url (str "http://localhost:" port "/"))
@@ -49,7 +49,7 @@
                                                           [:div {:id "chats" :hx-swap-oob "beforeend"}
                                                            [:div {} (let [json-map (json/parse-string message)]
                                                                       (get json-map "chat_message" "hmm??"))]])}))})
-    {:status 200 :body "<h1>Hmm?</h1>"}))
+    {:status 404 :body "<h1>Hmm?</h1>"}))
 
 ;; https://gist.github.com/borkdude/1627f39d072ea05557a324faf5054cf3
 (defn router [req]
@@ -59,15 +59,4 @@
       [:get ["ws"]] (websocket req)
       [:post ["clicked"]] (clicked req)
       [:get ["css" "style.css"]] {:body (slurp "resources/public/css/style.css")}
-      :else {:body "<p>Page not found.</p>"})))
-
-;; https://http-kit.github.io/server.html#stop-server
-(defonce server (atom nil))
-
-(defn stop-bantuin []
-  (when-not (nil? @server)
-    (@server :timeout 100)
-    (reset! server nil)))
-
-(defn start-bantuin []
-  (reset! server (run-server #'router {:port port})))
+      :else {:status 404 :body "<p>Page not found.</p>"})))

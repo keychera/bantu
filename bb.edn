@@ -1,1 +1,2 @@
-{:paths ["src"]}
+{:paths ["src"]
+ :pods {retrogradeorbit/bootleg {:version "0.1.9"}}}
