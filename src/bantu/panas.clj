@@ -33,8 +33,7 @@
 (defn panas-reload [embedded-server req]
   (let [paths (vec (rest (str/split (:uri req) #"/")))]
     (match/match [(:request-method req) paths]
-      [:get ["panas"]] (panas-websocket embedded-server req)
-      [:get ["css" "style.css"]] {:body (slurp "resources/public/css/style.css")}
+      [:get ["panas"]] (panas-websocket embedded-server req) 
       :else (if (:websocket? req)
               (embedded-server req)
               (as-> (embedded-server req) it
