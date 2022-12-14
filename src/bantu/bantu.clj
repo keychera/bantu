@@ -1,15 +1,12 @@
 (ns bantu.bantu
-  (:require [clojure.core.match :as match]
-            [clojure.string :as str]
-            [hiccup2.core :refer [html]]
+  (:require [bantu.common :refer [html-str]]
             [cheshire.core :as json]
+            [clojure.core.match :as match]
+            [clojure.string :as str]
             [org.httpkit.server :refer [as-channel run-server send!]]))
 
 (def port 4242)
 (def url (str "http://localhost:" port "/"))
-(defn html-str
-  ([input] (str (html input)))
-  ([input & rest] (str (html input) (->> rest (map #(html %)) (apply str)))))
 
 (defn app [req]
   {:status  200
