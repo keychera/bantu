@@ -22,7 +22,7 @@
              [:button {:class "text-slate-100"
                        :hx-post "/clicked"
                        :hx-swap "outerHTML"}
-              "Click Me"]
+              "Click you"]
              [:div {:hx-ext "ws" :ws-connect "/ws"}
               [:div {:id "chats"
                      :class "h-fit text-slate-100"}
@@ -40,8 +40,8 @@
 (defn websocket [req]
   (if (:websocket? req)
     (as-channel req
-                {:on-open    (fn [ch]         (println "on-open:"    ch))
-                 :on-close   (fn [ch status]  (println "on-close:"   status))
+                {:on-open    (fn [ch]         (println "[bantu] on-open"))
+                 :on-close   (fn [ch status]  (println "[bantu] on-close"   status))
                  :on-receive (fn [ch message]
                                (println "on-receive:" message)
                                (send! ch {:body (html-str [:form {:id "form" :ws-send "true"}

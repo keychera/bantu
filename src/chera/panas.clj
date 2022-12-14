@@ -15,13 +15,20 @@
 (defonce server (atom nil))
 (def panas-ch (atom nil))
 
-(defn panas-websocket [req]
+(defn panas-websocket [embedded-server req]
   (if (:websocket? req)
     (as-channel
      req
      {:on-open    (fn [ch]
                     (println "[panas] on-open")
-                    (reset! panas-ch ch))
+                    (reset! panas-ch ch)
+                    (send! ch
+                           {:body (html-str [:div {:id "akar" :hx-swap-oob "innerHtml"}
+                                             (let [response (embedded-server {:uri "" :request-method :get})
+                                                   hick (-> response :body (utils/convert-to :hickory))]
+                                               (if (= (:tag hick) :html)
+                                                 (-> hick :content (get 1) :content first (utils/convert-to :hiccup))
+                                                 response))])}))
       :on-close   (fn [_ status]
                     (println "[panas] on-close" status)
                     (reset! panas-ch nil))})
@@ -44,7 +51,7 @@
 (defn panas-reload [embedded-server req]
   (let [paths (vec (rest (str/split (:uri req) #"/")))]
     (match/match [(:request-method req) paths]
-      [:get ["panas"]] (panas-websocket req)
+      [:get ["panas"]] (panas-websocket embedded-server req)
       :else (if (:websocket? req)
               (embedded-server req)
               (as-> (embedded-server req) it
@@ -80,15 +87,6 @@
                       (load-file file-to-reload))
                     (start-panasin router)
                     (println "[panas] serving" url)
-                    (Thread/sleep 1000)
-                    (when-not (nil? @panas-ch)
-                      (send! @panas-ch
-                             {:body (html-str [:div {:id "akar" :hx-swap-oob "innerHtml"}
-                                               (let [response (router {:uri "" :request-method :get})
-                                                     hick (-> response :body (utils/convert-to :hickory))]
-                                                 (if (= (:tag hick) :html)
-                                                   (-> hick :content (get 1) :content first (utils/convert-to :hiccup))
-                                                   response))])}))
                     (catch Exception e
                       (println "[panas][error]" (.getMessage e)))))))
     (println "[panas] serving" url)
