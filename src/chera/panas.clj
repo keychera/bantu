@@ -79,12 +79,12 @@
               (fn [event]
                 (when (= :write (:type event))
                   (println "======")
-                  (println "[panas] stopping" url)
-                  (stop-panasin)
+                  (println "[panas] stopping" url) 
                   (try
                     (let [file-to-reload (:path event)]
                       (println "[panas] reloading" file-to-reload)
                       (load-file file-to-reload))
+                    (stop-panasin)
                     (start-panasin router)
                     (println "[panas] serving" url)
                     (catch Exception e
