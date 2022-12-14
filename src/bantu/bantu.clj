@@ -23,7 +23,7 @@
                        :hx-post "/clicked"
                        :hx-swap "outerHTML"}
               "Click you"]
-             [:div {:hx-ext "ws" :ws-connect "/ws"}
+             [:div { :ws-connect "/ws"}
               [:div {:id "chats"
                      :class "h-fit text-slate-100"}
                "..."]
