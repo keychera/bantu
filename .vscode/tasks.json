@@ -4,7 +4,7 @@
         {
             "label": "watch server",
             "type": "shell",
-            "command": "bb -m bantu.watcher",
+            "command": "bb -m panas.reload",
             "problemMatcher": []
         },
         {

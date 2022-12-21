@@ -1,4 +1,4 @@
-(ns chera.panas
+(ns panas.reload
   (:require [bantu.bantu :as bantu]
             [bantu.common :refer [from-here html-str]]
             [clojure.core.match :as match]
