@@ -1,11 +1,8 @@
 (ns bantu.watcher
   (:require [babashka.pods :as pods]
             [bantu.bantu :refer [start-bantuin stop-bantuin url]]
-            [bantu.common :refer [from-here]]))
-
-;; inspiration https://github.com/babashka/book/blob/master/script/watch.clj
-(pods/load-pod 'org.babashka/filewatcher "0.0.1")
-(require '[pod.babashka.filewatcher :as fw])
+            [bantu.common :refer [from-here]]
+            [pod.babashka.filewatcher :as fw]))
 
 (def here (from-here))
 

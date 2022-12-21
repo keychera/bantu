@@ -1,1 +1,3 @@
-{:paths ["src"]}
+{:paths ["src"]
+ :pods {retrogradeorbit/bootleg {:version "0.1.9"}
+        org.babashka/filewatcher {:version "0.0.1"}}}
