@@ -1,10 +1,9 @@
 (ns panas.reload
   (:require [bantu.bantu :as bantu]
-            [bantu.common :refer [from-here html-str]]
+            [bantu.common :refer [from-here]]
             [clojure.core.match :as match]
             [clojure.string :as str]
-            [org.httpkit.server :refer [as-channel run-server send!
-                                        server-port]]
+            [org.httpkit.server :refer [as-channel run-server send!]]
             [pod.babashka.filewatcher :as fw]
             [pod.retrogradeorbit.bootleg.utils :as utils]))
 
@@ -13,40 +12,48 @@
 (defonce port 4242)
 (defonce url (str "http://localhost:" port "/"))
 (defonce server (atom nil))
-(def panas-ch (atom nil))
 
 (defn panas-websocket [embedded-server req]
   (if (:websocket? req)
-    (as-channel
-     req
-     {:on-open    (fn [ch]
-                    (println "[panas] on-open")
-                    (reset! panas-ch ch)
-                    (send! ch
-                           {:body (html-str [:div {:id "akar" :hx-swap-oob "innerHtml"}
-                                             (let [response (embedded-server {:uri "" :request-method :get})
-                                                   hick (-> response :body (utils/convert-to :hickory))]
-                                               (if (= (:tag hick) :html)
-                                                 (-> hick :content (get 1) :content first (utils/convert-to :hiccup))
-                                                 response))])}))
-      :on-close   (fn [_ status]
-                    (println "[panas] on-close" status)
-                    (reset! panas-ch nil))})
+    (as-channel req
+                {:on-open  (fn [ch]
+                             (println "[panas] on-open")
+                             (send! ch
+                                    {:body (let [response (embedded-server {:uri "" :request-method :get})
+                                                 html-body (-> response :body)]
+                                              ;; assuming always root url for reloading which contains html>body
+                                             (-> (utils/convert-to html-body :hickory)
+                                                 (as-> {[_ {:keys [attrs] :as akar-body}] :content}
+                                                       (assoc akar-body :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml")))
+                                                 (assoc :tag :div)
+                                                 (utils/convert-to :html)))}))
+                 :on-close (fn [_ status] (println "[panas] on-close" status))})
     {:status 200 :body "<h1>tidak panas disini</h1>"}))
 
-(defn hick-to-embed [content]
-  [{:type :element
-    :attrs {:id "akar" :hx-ext "ws" :ws-connect "/panas"}
-    :tag :div
-    :content content}])
+;; https://clojuredocs.org/clojure.core/empty_q
+(defn not-empty? [coll] (seq coll))
 
-(defn embed-akar [hiccup-html embed-fn]
-  (let [hick-html (utils/convert-to hiccup-html :hickory)
-        [hick-head hick-body] (:content hick-html)
-        hick-div-vectors (:content hick-body)]
-    (-> (assoc hick-body :content (embed-fn hick-div-vectors))
-        (as-> embedded-body (assoc hick-html :content [hick-head embedded-body]))
-        (utils/convert-to :html))))
+(defn with-htmx-ws [head]
+  (let [content (:content head)
+        scripts (->> content (filter #(= (:tag %) :script)))
+        htmx-ws? (->> scripts (map :attrs) (map :src) (filter #(str/includes? % "dist/ext/ws.js")) not-empty?)]
+    (if htmx-ws? head
+        (assoc head :content (conj content {:type :element :attrs {:src "https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"} :tag :script :content nil})))))
+
+(defn with-akar [server req]
+  (as-> (server req) res
+    (let [{html-res :body} res
+          hick-res (utils/convert-to html-res :hickory)]
+      (cond (= (:tag hick-res) :html)
+            (-> hick-res
+                (as-> {[head {:keys [attrs] :as body}] :content :as html}
+                      (assoc html :content
+                             [(with-htmx-ws head) 
+                              (assoc body :attrs
+                                          (assoc attrs :id "akar" :hx-ext "ws" :ws-connect "/panas"))]))
+                (utils/convert-to :html)
+                (->> (assoc res :body)))
+            :else res))))
 
 (defn panas-reload [embedded-server req]
   (let [paths (vec (rest (str/split (:uri req) #"/")))]
@@ -54,11 +61,7 @@
       [:get ["panas"]] (panas-websocket embedded-server req)
       :else (if (:websocket? req)
               (embedded-server req)
-              (as-> (embedded-server req) it
-                (let [hiccup-resp (-> it :body (utils/convert-to :hiccup))]
-                  (if (some #{:html} hiccup-resp)
-                    (-> (assoc it :body (embed-akar hiccup-resp hick-to-embed)))
-                    it)))))))
+              (with-akar embedded-server req)))))
 
 (defn start-panasin [server-to-embed]
   (let [to-embed (partial panas-reload server-to-embed)]
@@ -79,7 +82,7 @@
               (fn [event]
                 (when (= :write (:type event))
                   (println "======")
-                  (println "[panas] stopping" url) 
+                  (println "[panas] stopping" url)
                   (try
                     (let [file-to-reload (:path event)]
                       (println "[panas] reloading" file-to-reload)
