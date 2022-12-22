@@ -21,7 +21,7 @@
                              (send! ch
                                     {:body (let [response (embedded-server {:uri "" :request-method :get})
                                                  html-body (-> response :body)]
-                                              ;; assuming always root url for reloading, which contains html>body
+                                              ;; assuming always root url for reloading which contains html>body
                                              (-> (utils/convert-to html-body :hickory)
                                                  (as-> {[_ {:keys [attrs] :as akar-body}] :content}
                                                        (assoc akar-body :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml")))
@@ -29,6 +29,16 @@
                                                  (utils/convert-to :html)))}))
                  :on-close (fn [_ status] (println "[panas] on-close" status))})
     {:status 200 :body "<h1>tidak panas disini</h1>"}))
+
+;; https://clojuredocs.org/clojure.core/empty_q
+(defn not-empty? [coll] (seq coll))
+
+(defn with-htmx-ws [head]
+  (let [content (:content head)
+        scripts (->> content (filter #(= (:tag %) :script)))
+        htmx-ws? (->> scripts (map :attrs) (map :src) (filter #(str/includes? % "dist/ext/ws.js")) not-empty?)]
+    (if htmx-ws? head
+        (assoc head :content (conj content {:type :element :attrs {:src "https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"} :tag :script :content nil})))))
 
 (defn with-akar [server req]
   (as-> (server req) res
@@ -38,7 +48,8 @@
             (-> hick-res
                 (as-> {[head {:keys [attrs] :as body}] :content :as html}
                       (assoc html :content
-                             [head (assoc body :attrs
+                             [(with-htmx-ws head) 
+                              (assoc body :attrs
                                           (assoc attrs :id "akar" :hx-ext "ws" :ws-connect "/panas"))]))
                 (utils/convert-to :html)
                 (->> (assoc res :body)))
