@@ -10,7 +10,7 @@
         {
             "label": "tailwind",
             "type": "shell",
-            "command": "tailwindcss -i ./app/tailwind.css -o ./resources/public/css/style.css --watch",
+            "command": "./tailwindcss -i ./app/tailwind.css -o ./resources/public/css/style.css --watch",
             "problemMatcher": []
         },
         {
