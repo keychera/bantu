@@ -1,6 +1,5 @@
 (ns panas.reload
-  (:require bantu.bantu
-            [bantu.common :refer [from-here]]
+  (:require [bantu.common :refer [from-here]]
             [clojure.core.match :as match]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
@@ -18,13 +17,15 @@
 (defonce panas-ch (atom nil))
 
 (defn refresh-body! [embedded-server]
-  (send! @panas-ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which respinse is html>body
-                                hick-res (utils/convert-to (:body res) :hickory)
-                                [{:keys [attrs] :as body}] (s/select (s/child (s/tag :body)) hick-res)] 
-                            (as-> body akar-body
-                              (assoc akar-body :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml"))
-                              (assoc akar-body :tag :div)
-                              (utils/convert-to akar-body :html)))}))
+  (let [ch @panas-ch]
+    (if (nil? ch) (println "[panas][warn] no opened panas client!")
+        (send! ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which respinse is html>body
+                               hick-res (utils/convert-to (:body res) :hickory)
+                               [{:keys [attrs] :as body}] (s/select (s/child (s/tag :body)) hick-res)]
+                           (as-> body akar-body
+                             (assoc akar-body :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml"))
+                             (assoc akar-body :tag :div)
+                             (utils/convert-to akar-body :html)))}))))
 
 (defn panas-websocket [req]
   (if (:websocket? req)
@@ -84,14 +85,16 @@
                 (when (= :write (:type event))
                   (println "======")
                   (try
-                    (let [file-to-reload (:path event)]
-                      (println "[panas][src] reloading" file-to-reload)
-                      (load-file file-to-reload))
+                    (let [changed-file (:path event)]
+                      (cond
+                        (str/ends-with? changed-file ".clj") (do (println "[panas][clj] reloading" changed-file)
+                                                                 (load-file changed-file))
+                        (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
+                        :else (println "[panas][other] changes on" changed-file)))
                     (println "[panas] refreshing" url)
                     (refresh-body! bantu-server)
                     (catch Exception e
                       (println "[panas][error]" (with-out-str (pprint e)))))))
-              {:delay-ms 50})
+              {:delay-ms 100})
     (println "[panas] serving" url)
-    @(promise))
-  )
+    @(promise)))
