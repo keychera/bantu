@@ -10,7 +10,12 @@
         {
             "label": "tailwind",
             "type": "shell",
-            "command": "tailwind -i ./app/tailwind.css -o ./resources/public/css/style.css --watch",
+            "command": "tailwindcss -i ./app/tailwind.css -o ./resources/public/css/style.css --watch",
+            "problemMatcher": []
+        },
+        {
+            "label": "start dev",
+            "dependsOn":["tailwind", "watch server"],
             "problemMatcher": []
         }
     ]
