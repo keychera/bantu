@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>bantu</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+    <script src="https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"></script>
+</head>
+
+<body>
+    <div class="h-screen bg-neutral-900">
+        <button class="text-slate-100" hx-post="/clicked" hx-swap="outerHTML">
+            {{button-text}}
+        </button>
+        <div ws-connect="/ws">
+            <div id="chats" class="h-fit text-slate-100">
+                ...
+            </div>
+            <form id="form" ws-send>
+                <input name="chat_message">
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

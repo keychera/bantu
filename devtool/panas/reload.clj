@@ -1,5 +1,5 @@
 (ns panas.reload
-  (:require [bantu.bantu :as bantu]
+  (:require bantu.bantu
             [bantu.common :refer [from-here]]
             [clojure.core.match :as match]
             [clojure.pprint :refer [pprint]]
@@ -7,7 +7,8 @@
             [org.httpkit.server :refer [as-channel run-server send!]]
             [pod.babashka.filewatcher :as fw]
             [pod.retrogradeorbit.bootleg.utils :as utils]
-            [pod.retrogradeorbit.hickory.select :as s]))
+            [pod.retrogradeorbit.hickory.select :as s]
+            [bantu.bantu :as bantu]))
 
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
@@ -72,19 +73,19 @@
   (let [to-embed (partial panas-reload server-to-embed)]
     (reset! server (run-server #'to-embed {:port port}))))
 
-(def bantu-dir (from-here "../bantu"))
+(def app-dir (from-here "../../app"))
 
 (defn -main [& _]
   (let [bantu-server bantu/router]
     (println "[panas] starting")
     (start-panasin bantu-server)
-    (fw/watch bantu-dir
+    (fw/watch app-dir
               (fn [event]
                 (when (= :write (:type event))
                   (println "======")
                   (try
                     (let [file-to-reload (:path event)]
-                      (println "[panas] reloading" file-to-reload)
+                      (println "[panas][src] reloading" file-to-reload)
                       (load-file file-to-reload))
                     (println "[panas] refreshing" url)
                     (refresh-body! bantu-server)
@@ -92,4 +93,5 @@
                       (println "[panas][error]" (with-out-str (pprint e)))))))
               {:delay-ms 50})
     (println "[panas] serving" url)
-    @(promise)))
+    @(promise))
+  )
