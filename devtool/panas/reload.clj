@@ -19,13 +19,13 @@
 (defn refresh-body! [embedded-server]
   (let [ch @panas-ch]
     (if (nil? ch) (println "[panas][warn] no opened panas client!")
-        (send! ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which respinse is html>body
+        (send! ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which response is html>body
                                hick-res (utils/convert-to (:body res) :hickory)
                                [{:keys [attrs] :as body}] (s/select (s/child (s/tag :body)) hick-res)]
-                           (as-> body akar-body
-                             (assoc akar-body :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml"))
-                             (assoc akar-body :tag :div)
-                             (utils/convert-to akar-body :html)))}))))
+                           (-> body 
+                             (assoc :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml"))
+                             (assoc :tag :div)
+                             (utils/convert-to :html)))}))))
 
 (defn panas-websocket [req]
   (if (:websocket? req)
