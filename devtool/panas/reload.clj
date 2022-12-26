@@ -7,7 +7,8 @@
             [pod.babashka.filewatcher :as fw]
             [pod.retrogradeorbit.bootleg.utils :as utils]
             [pod.retrogradeorbit.hickory.select :as s]
-            [bantu.bantu :as bantu]))
+            [bantu.bantu :as bantu]
+            [clojure.java.io :as io]))
 
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
@@ -48,6 +49,9 @@
     (if htmx-ws? head
         (assoc head :content (conj content {:type :element :attrs {:src "https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"} :tag :script :content nil})))))
 
+(def css-refresher-js {:type :element :attrs nil :tag :script
+                       :content [(slurp (io/resource "panas/cssRefresher.js"))]})
+
 (defn with-akar [response]
   (let [hick-seq (utils/convert-to (:body response) :hickory-seq)
         html? (->> hick-seq (map :tag) (filter #(= % :html)) not-empty?)]
@@ -58,7 +62,9 @@
                   [[_ & body-front] [body] & body-rest] (partition-by #(= (:tag %) :body) (-> (:content html) seq (conj "\n")))
                   [[_ & head-front] [head] & head-rest] (partition-by #(= (:tag %) :head) (-> body-front (conj "\n")))
                   akar-head (with-htmx-ws head)
-                  akar-body (assoc body :attrs {:id "akar" :hx-ext "ws" :ws-connect "/panas"})
+                  akar-body (assoc body
+                                   :attrs {:id "akar" :hx-ext "ws" :ws-connect "/panas"}
+                                   :content (conj (:content body) css-refresher-js))
                   akar-html (assoc html :content (->> [head-front akar-head head-rest akar-body body-rest] (remove nil?) flatten vec))
                   akar-seq (->> [front akar-html rest] (remove nil?) flatten seq)]
               (assoc response :body (utils/convert-to akar-seq :html))))))
