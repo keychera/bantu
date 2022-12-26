@@ -1,8 +1,9 @@
 (ns bantu.bantu
   (:require [clojure.core.match :as match]
-            [clojure.string :as str] 
-            [selmer.parser :refer [render-file]]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [funrepo.anki :as anki]
+            [selmer.parser :refer [render-file]]))
 
 (defn app [req]
   {:status  200
@@ -10,9 +11,12 @@
    :body (render-file "home.html" {:button-text "[Selmer] click me!"})})
 
 (defn connect-anki []
-  (Thread/sleep 1000)
-  {:status 200
-   :body (render-file "connect-failed.html" {})})
+  (let [anki-response (try (anki/connect) (catch Exception _ nil))]
+    (if anki-response
+      {:status 200
+       :body (render-file "connect-success.html" {:anki-connect-ver (:body anki-response)})}
+      {:status 200
+       :body (render-file "connect-failed.html" {})})))
 
 ;; https://gist.github.com/borkdude/1627f39d072ea05557a324faf5054cf3
 (defn router [req]
