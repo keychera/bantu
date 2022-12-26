@@ -16,23 +16,23 @@
 (defonce server (atom nil))
 (defonce panas-ch (atom nil))
 
-(defn refresh-body! [embedded-server]
-  (let [ch @panas-ch]
-    (if (nil? ch) (println "[panas][warn] no opened panas client!")
-        (send! ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which response is html>body
-                               hick-res (utils/convert-to (:body res) :hickory)
-                               [{:keys [attrs] :as body}] (s/select (s/child (s/tag :body)) hick-res)]
-                           (-> body 
+(defn refresh-body! [embedded-server ch]
+  (if (nil? ch) (println "[panas][warn] no opened panas client!")
+      (send! ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which response is html>body
+                             hick-res (utils/convert-to (:body res) :hickory)
+                             [{:keys [attrs] :as body}] (s/select (s/child (s/tag :body)) hick-res)]
+                         (-> body
                              (assoc :attrs (assoc attrs :id "akar" :hx-swap-oob "innerHtml"))
                              (assoc :tag :div)
-                             (utils/convert-to :html)))}))))
+                             (utils/convert-to :html)))})))
 
-(defn panas-websocket [req]
+(defn panas-websocket [embedded-server req]
   (if (:websocket? req)
     (as-channel req
                 {:on-open  (fn [ch]
                              (println "[panas] on-open")
-                             (reset! panas-ch ch))
+                             (reset! panas-ch ch)
+                             (refresh-body! embedded-server ch))
                  :on-close (fn [_ status]
                              (println "[panas] on-close" status)
                              (reset! panas-ch nil))})
@@ -53,6 +53,7 @@
         html? (->> hick-seq (map :tag) (filter #(= % :html)) not-empty?)]
     (if-not html? response
             (let [;; conj with "\n"  ensure partition-by results in at least three element, destructuring [_ front] ignores it back
+                  ;; TODO bug: this transformation causes emoji unicode to break
                   [[_ & front] [html] & rest] (partition-by #(= (:tag %) :html) (-> hick-seq (conj "\n")))
                   [[_ & body-front] [body] & body-rest] (partition-by #(= (:tag %) :body) (-> (:content html) seq (conj "\n")))
                   [[_ & head-front] [head] & head-rest] (partition-by #(= (:tag %) :head) (-> body-front (conj "\n")))
@@ -65,7 +66,7 @@
 (defn panas-reload [embedded-server req]
   (let [paths (vec (rest (str/split (:uri req) #"/")))]
     (match/match [(:request-method req) paths]
-      [:get ["panas"]] (panas-websocket req)
+      [:get ["panas"]] (panas-websocket embedded-server req)
       :else (let [res (embedded-server req)]
               (if (:websocket? req) res
                   (with-akar res))))))
@@ -93,7 +94,7 @@
                         (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
                         :else (println "[panas][other] changes on" changed-file)))
                     (println "[panas] refreshing" url)
-                    (refresh-body! bantu-server)
+                    (refresh-body! bantu-server @panas-ch)
                     (catch Exception e
                       (println "[panas][error]" (with-out-str (pprint e)))))))
               {:delay-ms 100})
