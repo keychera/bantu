@@ -72,12 +72,13 @@
 
 (defn start-panasin [server-to-embed]
   (let [to-embed (partial panas-reload server-to-embed)]
-    (reset! server (run-server #'to-embed {:port port}))))
+    (reset! server (run-server to-embed {:port port}))))
 
 (def app-dir (from-here "../../app"))
 
 (defn -main [& _]
-  (let [bantu-server bantu/router]
+  ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
+  (let [bantu-server #'bantu/router]
     (println "[panas] starting")
     (start-panasin bantu-server)
     (fw/watch app-dir
