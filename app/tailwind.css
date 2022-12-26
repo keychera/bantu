@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.normal-indicator{
+    display: none;
+}
+
+.htmx-request .normal-indicator{
+    display: flex;
+}
+
+.htmx-request.normal-indicator{
+    display: flex;
+}
+
+.reverse-indicator{
+    display: flex;
+}
+
+.htmx-request .reverse-indicator{
+    display: none;
+}
+
+.htmx-request.reverse-indicator{
+    display: none;
+}

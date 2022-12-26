@@ -10,17 +10,15 @@
 </head>
 
 <body>
-    <div class="h-screen bg-neutral-900">
-        <button class="text-slate-100" hx-post="/clicked" hx-swap="outerHTML">
-            {{button-text}}
-        </button>
-        <div ws-connect="/ws">
-            <div id="chats" class="h-fit text-slate-100">
-                ...
+    <div class="h-screen p-4 bg-neutral-900">
+        <div class="w-36 h-10 mb-4 px-4 py-2 flex justify-between text-slate-200 border border-emerald-600">
+            <span> Connected!</span><span>✅</span>
+        </div>
+
+        <div id="connect-anki" hx-get="/connect-anki" hx-trigger="load" hx-swap="outerHTML">
+            <div class="w-36 h-10 mb-4 px-4 py-2 justify-between text-slate-200 border border-gray-600 normal-indicator">
+                Connecting...
             </div>
-            <form id="form" ws-send>
-                <input name="chat_message">
-            </form>
         </div>
     </div>
 </body>
