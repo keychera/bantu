@@ -63,7 +63,7 @@
                   [[_ & head-front] [head] & head-rest] (partition-by #(= (:tag %) :head) (-> body-front (conj "\n")))
                   akar-head (with-htmx-ws head)
                   akar-body (assoc body
-                                   :attrs (conj (:attrs body) {:id "akar" :hx-ext "ws" :ws-connect "/panas"})
+                                   :attrs (merge (:attrs body) {:id "akar" :hx-ext "ws" :ws-connect "/panas"})
                                    :content (conj (:content body) css-refresher-js))
                   akar-html (assoc html :content (->> [head-front akar-head head-rest akar-body body-rest] (remove nil?) flatten vec))
                   akar-seq (->> [front akar-html rest] (remove nil?) flatten seq)]
