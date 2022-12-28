@@ -1,14 +1,14 @@
 (ns panas.reload
-  (:require [bantu.common :refer [from-here]]
+  (:require [bantu.bantu :as bantu]
+            [bantu.common :refer [from-here]]
             [clojure.core.match :as match]
+            [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel run-server send!]]
             [pod.babashka.filewatcher :as fw]
             [pod.retrogradeorbit.bootleg.utils :as utils]
-            [pod.retrogradeorbit.hickory.select :as s]
-            [bantu.bantu :as bantu]
-            [clojure.java.io :as io]))
+            [pod.retrogradeorbit.hickory.select :as s]))
 
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
@@ -74,12 +74,13 @@
     (match/match [(:request-method req) paths]
       [:get ["panas"]] (panas-websocket embedded-server req)
       :else (let [res (embedded-server req)]
-              (if (:websocket? req) res
-                  (with-akar res))))))
+              (cond (:websocket? req) res
+                    (= (:async-channel req) (:body res)) res ;; idea from as-channel source-code
+                    :else (with-akar res))))))
 
 (defn start-panasin [server-to-embed]
   (let [to-embed (partial panas-reload server-to-embed)]
-    (reset! server (run-server to-embed {:port port}))))
+    (reset! server (run-server to-embed {:port port :thread 4}))))
 
 (def app-dir (from-here "../../app"))
 
