@@ -29,8 +29,7 @@
 
 
 (defn app
-  ([] (app nil nil))
-  ([main opts] (render-file "ex/bread.html" (merge {:render-main main} opts))))
+  [main opts] (render-file "ex/bread.html" (merge {:render-main main} opts)))
 
 ;; components
 (defn hello [] {:sidebar "hello" :body "hello"})
@@ -38,19 +37,33 @@
 (defn intro [] {:sidebar "doc" :body "intro"})
 (defn user [id] {:body (str "user is " id)})
 
-(defn partial? [req] (= "p" (:query-string req)))
+;; sidebars
+(defmacro sidebar-maps [& syms]
+  (zipmap (map (comp name :handler) syms) syms))
+
+(def sidebars (sidebar-maps
+               {:handler hello :text "Hello!"}
+               {:handler doc :text "Doc"}))
+
+(defn render-sidebars [selected]
+  (->> sidebars
+       (map (fn [[k {:keys [text]}]]
+              (render-file "ex/sidebar.html" {:url k :text text :selected (:sidebar selected)})))
+       (reduce str)))
+
+(defn part? [req] (= "p" (:query-string req)))
 
 (defn component-route [partial component]
   (if partial component
       (let [{:keys [sidebar body]} component]
-        {:body (app body {:selected sidebar})})))
+        {:body (app body {:render-sidebars (render-sidebars sidebar)})})))
 
 (defn router [req]
   (let [paths (-> (:uri req) (str/split #"/") rest vec)
         verb (:request-method req)
-        route (partial component-route (partial? req))]
+        route (partial component-route (part? req))]
     (match [verb paths]
-      [:get []] {:body (app)}
+      [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route (hello))
       [:get ["doc"]] (route (doc))
       [:get ["doc" "intro"]] (route (intro))
