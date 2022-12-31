@@ -6,11 +6,6 @@
             [org.httpkit.server :refer [as-channel send!]]
             [selmer.parser :refer [render-file]]))
 
-(defn app [req]
-  {:status  200
-   :headers {"Content-Type" "text/html"}
-   :body (render-file "home.html" {})})
-
 (defn connect-anki []
   (let [anki-response (try (anki/connect) (catch Exception _ nil))]
     (if anki-response
@@ -32,25 +27,30 @@
 ;;       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
 ;;       :else {:status 404 :body "<p>Page not found.</p>"})))
 
+;; components
+(defn app
+  ([] (app nil))
+  ([main] (render-file "ex/bread.html" {:render-main main})))
 
-;; /
-;; /hello
-;; /doc/intro
-;; /user/chera
+(defn hello [] "hello")
+(defn doc [] (render-file "ex/doc.html" {}))
+(defn intro [] "intro")
+(defn user [id] (str "user is " id))
 
-(defn hello [] {:body "hello"})
-(defn doc [] {:body "doc"})
-(defn intro [] {:body "intro"})
-(defn user [id] {:body (str "user is " id)})
+(defn partial? [req] (= "p" (:query-string req)))
+
+(defn component-route [partial sub]
+  (if partial {:body sub} {:body (app sub)}))
 
 (defn router [req]
   (let [paths (-> (:uri req) (str/split #"/") rest vec)
-        verb (:request-method req)]
+        verb (:request-method req)
+        route (partial component-route (partial? req))]
     (match [verb paths]
-      [:get []] {:body (render-file "ex/bread.html" {})}
-      [verb ["hello"]] (hello)
-      [verb ["doc"]] (doc)
-      [verb ["doc" "intro"]] (intro)
-      [verb ["user" id]] (user id)
+      [:get []] {:body (app)}
+      [:get ["hello"]] (route (hello))
+      [:get ["doc"]] (route (doc))
+      [:get ["doc" "intro"]] (route (intro))
+      [:get ["user" id]] (route (user id))
       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))
