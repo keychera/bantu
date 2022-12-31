@@ -3,6 +3,7 @@
 <head>
     <link href="/css/style.css" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.7"></script>
 </head>
 
 <body class="flex flex-row">
@@ -11,13 +12,15 @@
             <a href="/" class="text-xl">bantu</a>
         </div>
         <aside id="sidebar" class="px-4 py-2">
-            <div hx-get="/hello?p" hx-target="#main" hx-push-url="/hello"
-                class="my-1 p-2 rounded-lg hover:bg-gray-200 cursor-pointer">hello</div>
-            <div hx-get="/doc?p" hx-target="#main" hx-push-url="/doc"
-                class="my-1 p-2 rounded-lg hover:bg-gray-200 cursor-pointer">doc</div>
+            <div hx-sync="this:replace" _="on htmx:afterOnLoad take .selected-sidebar for event.target">
+                <div hx-get="/hello?p" hx-target="#main" hx-push-url="/hello"
+                    class='my-1 p-2 rounded-lg hover:bg-gray-400 cursor-pointer{% if selected = "hello" %} selected-sidebar{% endif %}'>hello</div>
+                <div hx-get="/doc?p" hx-target="#main" hx-push-url="/doc"
+                    class='my-1 p-2 rounded-lg hover:bg-gray-400 cursor-pointer{% if selected = "doc" %} selected-sidebar{% endif %}'>doc</div>
+            </div>
         </aside>
         <div id="main" class="p-5 h-screen w-screen bg-gray-100">
-            {% if render-main %} {{render-main}}
+            {% if render-main %} {{render-main|safe}}
             {% else %} {% include "ex/landing.html" %}
             {% endif %}
         </div>

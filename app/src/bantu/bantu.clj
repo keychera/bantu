@@ -27,20 +27,23 @@
 ;;       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
 ;;       :else {:status 404 :body "<p>Page not found.</p>"})))
 
-;; components
-(defn app
-  ([] (app nil))
-  ([main] (render-file "ex/bread.html" {:render-main main})))
 
-(defn hello [] "hello")
-(defn doc [] (render-file "ex/doc.html" {}))
-(defn intro [] "intro")
-(defn user [id] (str "user is " id))
+(defn app
+  ([] (app nil nil))
+  ([main opts] (render-file "ex/bread.html" (merge {:render-main main} opts))))
+
+;; components
+(defn hello [] {:sidebar "hello" :body "hello"})
+(defn doc [] {:sidebar "doc" :body (render-file "ex/doc.html" {})})
+(defn intro [] {:sidebar "doc" :body "intro"})
+(defn user [id] {:body (str "user is " id)})
 
 (defn partial? [req] (= "p" (:query-string req)))
 
-(defn component-route [partial sub]
-  (if partial {:body sub} {:body (app sub)}))
+(defn component-route [partial component]
+  (if partial component
+      (let [{:keys [sidebar body]} component]
+        {:body (app body {:selected sidebar})})))
 
 (defn router [req]
   (let [paths (-> (:uri req) (str/split #"/") rest vec)
