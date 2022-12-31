@@ -1,14 +1,14 @@
 (ns panas.reload
-  (:require [bantu.bantu :as bantu]
-            [bantu.common :refer [from-here]]
+  (:require [bantu.common :refer [from-here]]
             [clojure.core.match :as match]
-            [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel run-server send!]]
             [pod.babashka.filewatcher :as fw]
             [pod.retrogradeorbit.bootleg.utils :as utils]
-            [pod.retrogradeorbit.hickory.select :as s]))
+            [pod.retrogradeorbit.hickory.select :as s]
+            [bantu.bantu :as bantu]
+            [clojure.java.io :as io]))
 
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
@@ -33,7 +33,8 @@
                 {:on-open  (fn [ch]
                              (println "[panas] on-open")
                              (reset! panas-ch ch)
-                             (refresh-body! embedded-server ch))
+                            ;;  (refresh-body! embedded-server ch) this code fix unicode break but doubles the on `load` request time
+                             )
                  :on-close (fn [_ status]
                              (println "[panas] on-close" status)
                              (reset! panas-ch nil))})
@@ -75,12 +76,12 @@
       [:get ["panas"]] (panas-websocket embedded-server req)
       :else (let [res (embedded-server req)]
               (cond (:websocket? req) res
-                    (= (:async-channel req) (:body res)) res ;; idea from as-channel source-code
+                    (= (:async-channel req) (:body res)) res
                     :else (with-akar res))))))
 
 (defn start-panasin [server-to-embed]
   (let [to-embed (partial panas-reload server-to-embed)]
-    (reset! server (run-server to-embed {:port port :thread 4}))))
+    (reset! server (run-server to-embed {:port port :thread 12}))))
 
 (def app-dir (from-here "../../app"))
 
@@ -103,7 +104,8 @@
                     (println "[panas] refreshing" url)
                     (refresh-body! bantu-server @panas-ch)
                     (catch Exception e
-                      (println "[panas][error]" (with-out-str (pprint e)))))))
+                      (let [{:keys [cause]} (Throwable->map e)]
+                        (println) (println "[panas][ERROR]" cause) (println))))))
               {:delay-ms 100})
     (println "[panas] serving" url)
     @(promise)))
