@@ -47,8 +47,8 @@
 
 (defn render-sidebars [selected]
   (->> sidebars
-       (map (fn [[k {:keys [text]}]]
-              (render-file "ex/sidebar.html" {:url k :text text :selected (:sidebar selected)})))
+       (map (fn [[name {:keys [text]}]]
+              (render-file "ex/sidebar.html" {:url name :text text :selected (= name selected)})))
        (reduce str)))
 
 (defn part? [req] (= "p" (:query-string req)))
