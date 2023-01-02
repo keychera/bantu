@@ -25,3 +25,9 @@
 .htmx-request.reverse-indicator{
     display: none;
 }
+
+@layer components {
+    .selected-sidebar {
+        @apply bg-gray-200
+    }
+}
