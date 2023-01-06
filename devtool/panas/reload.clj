@@ -1,25 +1,27 @@
 (ns panas.reload
-  (:require [bantu.common :refer [from-here]]
-            [clojure.core.match :as match]
-            [clojure.pprint :refer [pprint]]
+  (:require [bantu.bantu :as bantu]
+            [clojure.core.match :refer [match]]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel run-server send!]]
-            [pod.babashka.filewatcher :as fw]
+            [babashka.pods :as pods]
             [pod.retrogradeorbit.bootleg.utils :as utils]
             [pod.retrogradeorbit.hickory.select :as s]
-            [bantu.bantu :as bantu]
-            [clojure.java.io :as io]))
+            [serve :refer [async-wrapper]]))
+
+(pods/load-pod 'org.babashka/filewatcher "0.0.1")
+(require '[pod.babashka.filewatcher :as fw])
 
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
 (defonce port 4242)
 (defonce url (str "http://localhost:" port "/"))
-(defonce server (atom nil))
 (defonce panas-ch (atom nil))
+(defonce current-url (atom "/"))
 
 (defn refresh-body! [embedded-server ch]
   (if (nil? ch) (println "[panas][warn] no opened panas client!")
-      (send! ch {:body (let [res (embedded-server {:uri "" :request-method :get}) ;; assuming root url which response is html>body
+      (send! ch {:body (let [res (embedded-server {:request-method :get :uri @current-url}) ;; assuming :get url which response is html>body
                              hick-res (utils/convert-to (:body res) :hickory)
                              [{:keys [attrs] :as body}] (s/select (s/child (s/tag :body)) hick-res)]
                          (-> body
@@ -27,14 +29,12 @@
                              (assoc :tag :div)
                              (utils/convert-to :html)))})))
 
-(defn panas-websocket [embedded-server req]
+(defn panas-websocket [req]
   (if (:websocket? req)
     (as-channel req
                 {:on-open  (fn [ch]
                              (println "[panas] on-open")
-                             (reset! panas-ch ch)
-                            ;;  (refresh-body! embedded-server ch) this code fix unicode break but doubles the on `load` request time
-                             )
+                             (reset! panas-ch ch))
                  :on-close (fn [_ status]
                              (println "[panas] on-close" status)
                              (reset! panas-ch nil))})
@@ -71,9 +71,16 @@
               (assoc response :body (utils/convert-to akar-seq :html))))))
 
 (defn panas-reload [embedded-server req]
-  (let [paths (vec (rest (str/split (:uri req) #"/")))]
-    (match/match [(:request-method req) paths]
-      [:get ["panas"]] (panas-websocket embedded-server req)
+  (let [uri (:uri req) ;; probably need better way to detect reloadable url
+        verb (:request-method req)
+        paths (vec (rest (str/split uri #"/")))]
+    (when (and (= verb :get)
+               (not (:websocket? req))
+               (not (str/starts-with? uri "/css")))
+      (reset! current-url uri)
+      (println "currently on" uri))
+    (match [verb paths]
+      [:get ["panas"]] (panas-websocket req)
       :else (let [res (embedded-server req)]
               (cond (:websocket? req) res
                     (= (:async-channel req) (:body res)) res
@@ -81,15 +88,17 @@
 
 (defn start-panasin [server-to-embed]
   (let [to-embed (partial panas-reload server-to-embed)]
-    (reset! server (run-server to-embed {:port port :thread 12}))))
+    (run-server to-embed {:port port :thread 12})))
 
-(def app-dir (from-here "../../app"))
+(def app-dir (-> (io/resource "pivot") .getPath (str/split #"/") drop-last drop-last
+                 (->> (reduce #(str %1 "/" %2)))
+                 (str "/app")))
 
 (defn -main [& _]
   ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
-  (let [bantu-server #'bantu/router]
+  (let [router (partial async-wrapper #'bantu/router)]
     (println "[panas] starting")
-    (start-panasin bantu-server)
+    (start-panasin router)
     (fw/watch app-dir
               (fn [event]
                 (when (= :write (:type event))
@@ -102,7 +111,7 @@
                         (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
                         :else (println "[panas][other] changes on" changed-file)))
                     (println "[panas] refreshing" url)
-                    (refresh-body! bantu-server @panas-ch)
+                    (refresh-body! router @panas-ch)
                     (catch Exception e
                       (let [{:keys [cause]} (Throwable->map e)]
                         (println) (println "[panas][ERROR]" cause) (println))))))

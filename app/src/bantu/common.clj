@@ -1,7 +1,11 @@
 (ns bantu.common
-  (:require [clojure.string :as str]))
+  (:require [babashka.curl :as curl]
+            [clojure.string :as str]
+            [org.httpkit.server :refer [as-channel send!]]
+            [pod.retrogradeorbit.bootleg.markdown :refer [markdown]]
+            [pod.retrogradeorbit.bootleg.utils :refer [convert-to]]))
 
-(def f-sep (java.io.File/separator))
-(defn from-here
-  ([]     (from-here ""))
-  ([filename]  (str (as-> *file* it (str/split it (re-pattern f-sep)) (drop-last it) (str/join f-sep it)) f-sep filename)))
+(defn httpkit-async! [req get-res]
+  (as-channel req {:on-open (fn [ch] (send! ch (get-res)))}))
+
+(defn http-get [url opts] (curl/get url opts))

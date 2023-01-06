@@ -1,9 +1,9 @@
 (ns bantu.bantu
-  (:require [clojure.core.match :refer [match]]
+  (:require [bantu.common :refer [httpkit-async!]]
+            [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [funrepo.anki :as anki]
-            [org.httpkit.server :refer [as-channel send!]]
             [selmer.parser :refer [render-file]]))
 
 (defn connect-anki []
@@ -16,7 +16,7 @@
 
 ;; from as-channel source code docs
 (defn anki-async-handler [ring-req]
-  (as-channel ring-req {:on-open (fn [ch]  (send! ch (connect-anki)))}))
+  (httpkit-async! ring-req (connect-anki)))
 
 ;; ;; https://gist.github.com/borkdude/1627f39d072ea05557a324faf5054cf3
 ;; (defn router [req]
