@@ -96,7 +96,7 @@
 
 (defn -main [& _]
   ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
-  (let [router (partial async-wrapper #'bantu/router)]
+  (let [router (partial #'async-wrapper #'bantu/router)]
     (println "[panas] starting")
     (start-panasin router)
     (fw/watch app-dir

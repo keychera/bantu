@@ -5,7 +5,7 @@
             [funrepo.anki :as anki]
             [selmer.parser :refer [render-file]]))
 
-(defn connect-anki []
+(defn connect-anki [_]
   (let [anki-response (try (anki/connect) (catch Exception _ nil))]
     (if anki-response
       {:status 200

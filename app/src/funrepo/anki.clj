@@ -1,6 +1,5 @@
 (ns funrepo.anki
-  (:require [bantu.common :refer [http-get]]
-            [clojure.pprint :refer [pprint]]))
+  (:require [bantu.common :refer [http-get]]))
 
 ;; https://foosoft.net/projects/anki-connect/
 (defonce anki-connect "localhost:8765")

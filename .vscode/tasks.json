@@ -4,7 +4,7 @@
         {
             "label": "watch server",
             "type": "shell",
-            "command": "bb -m panas.reload",
+            "command": "bb panas.reload",
             "problemMatcher": []
         },
         {
