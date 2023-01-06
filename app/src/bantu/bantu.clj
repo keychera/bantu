@@ -1,6 +1,5 @@
 (ns bantu.bantu
-  (:require [bantu.common :refer [httpkit-async!]]
-            [clojure.core.match :refer [match]]
+  (:require [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [funrepo.anki :as anki]
@@ -14,26 +13,13 @@
       {:status 200
        :body (render-file "connect-failed.html" {})})))
 
-;; from as-channel source code docs
-(defn anki-async-handler [ring-req]
-  (httpkit-async! ring-req (connect-anki)))
-
-;; ;; https://gist.github.com/borkdude/1627f39d072ea05557a324faf5054cf3
-;; (defn router [req]
-;;   (let [paths (vec (rest (str/split (:uri req) #"/")))]
-;;     (match [(:request-method req) paths]
-;;       [:get []] (app req)
-;;       [:get ["connect-anki"]] (anki-async-handler req)
-;;       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
-;;       :else {:status 404 :body "<p>Page not found.</p>"})))
-
-
 (defn app
   [main opts] (render-file "ex/bread.html" (merge {:render-main main} opts)))
 
 ;; components
 (defn hello [] {:sidebar "hello" :body "hello"})
 (defn doc [] {:sidebar "doc" :body (render-file "ex/doc.html" {})})
+(defn anki [] {:sidebar "anki" :body (render-file "ex/anki.html" {})})
 (defn intro [] {:sidebar "doc" :body "intro"})
 (defn user [id] {:body (str "user is " id)})
 
@@ -43,7 +29,8 @@
 
 (def sidebars (sidebar-maps
                {:handler hello :text "Hello!"}
-               {:handler doc :text "Doc"}))
+               {:handler doc :text "Doc"}
+               {:handler anki :text "Anki"}))
 
 (defn render-sidebars [selected]
   (->> sidebars
@@ -66,7 +53,11 @@
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route (hello))
       [:get ["doc"]] (route (doc))
+      [:get ["anki"]] (route (anki))
       [:get ["doc" "intro"]] (route (intro))
       [:get ["user" id]] (route (user id))
+      
+      [:post ["connect-anki"]] {:as-async connect-anki}
+      
       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))
