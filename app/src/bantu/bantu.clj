@@ -9,17 +9,17 @@
   (let [anki-response (try (anki/connect) (catch Exception _ nil))]
     (if anki-response
       {:status 200
-       :body (render-file "connect-success.html" {:anki-connect-ver (:body anki-response)})}
+       :body (render-file "anki/success.html" {:anki-connect-ver (:body anki-response)})}
       {:status 200
-       :body (render-file "connect-failed.html" {})})))
+       :body (render-file "anki/failed.html" {})})))
 
 (defn app
-  [main opts] (render-file "ex/bread.html" (merge {:render-main main} opts)))
+  [main opts] (render-file "app.html" (merge {:render-main main} opts)))
 
 ;; components
 (defn hello [] {:sidebar "hello" :body "hello"})
-(defn doc [] {:sidebar "doc" :body (render-file "ex/doc.html" {})})
-(defn anki [] {:sidebar "anki" :body (render-file "ex/anki.html" {})})
+(defn doc [] {:sidebar "doc" :body (render-file "doc.html" {})})
+(defn anki [] {:sidebar "anki" :body (render-file "anki/connect.html" {})})
 (defn intro [] {:sidebar "doc" :body "intro"})
 (defn user [id] {:body (str "user is " id)})
 
@@ -35,7 +35,7 @@
 (defn render-sidebars [selected]
   (->> sidebars
        (map (fn [[name {:keys [text]}]]
-              (render-file "ex/sidebar.html" {:url name :text text :selected (= name selected)})))
+              (render-file "sidebar.html" {:url name :text text :selected (= name selected)})))
        (reduce str)))
 
 (defn part? [req] (= "p" (:query-string req)))
