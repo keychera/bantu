@@ -1,12 +1,10 @@
 (ns funrepo.fns)
 
-(def job [:wizard :rogue :healer :warrior])
-
-(defn ^:bantu retrieve
+(defn ^{:bantu true} retrieve
   [^{:type :number} number
    ^{:type :text} text
    ^{:type :checkbox} boolean?
-   ^{:type :enum :values #'job} enums
+   ^{:type :enum :values [:wizard :rogue :healer :warrior]} enums
    ^{:type :coll} coll
    ^{:type :multi} multiline
    ^{:type :file} file]

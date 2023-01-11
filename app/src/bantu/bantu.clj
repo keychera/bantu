@@ -22,10 +22,11 @@
 (defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "anki/connect.html" {}))
 (defn ^{:sidebar "doc"} intro [] "intro")
+(defn ^{:sidebar "fn" :title "fn()"} fn-page [] "fn is here")
 
 ;; engine
 (defn render-sidebars [selected]
-  (->> [#'hello #'doc #'anki]
+  (->> [#'hello #'doc #'anki #'fn-page]
        (map (fn [handler]
               (let [{:keys [sidebar title]} (meta handler)]
                 (render-file "sidebar.html" {:url sidebar :title title :selected (= sidebar selected)}))))
@@ -47,9 +48,10 @@
       [:get ["hello"]] (route #'hello)
       [:get ["doc"]] (route #'doc)
       [:get ["anki"]] (route #'anki)
-      [:get ["doc" "intro"]] (route #'intro)
-      [:get ["fn" ns-val]] (route (fn-list-ui (symbol ns-val)))
-      [:get ["fn" ns-val name]] (route (fn-ui (str "#'" ns-val "/" name)))
+      [:get ["doc" "intro"]] (route #'intro) 
+      [:get ["fn"]] (route #'fn-page)
+      [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
+      [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
 
       [:post ["connect-anki"]] {:as-async connect-anki}
 
