@@ -22,7 +22,8 @@
 (defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "anki/connect.html" {}))
 (defn ^{:sidebar "doc"} intro [] "intro")
-(defn ^{:sidebar "fn" :title "fn()"} fn-page [] "fn is here")
+(defn ^{:sidebar "fn" :title "fn()"} fn-page [] 
+  "<a href=\"/fn/funrepo.fns\">funrepo.fns</a>")
 
 ;; engine
 (defn render-sidebars [selected]
