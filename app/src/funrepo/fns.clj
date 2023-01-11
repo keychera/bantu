@@ -3,15 +3,14 @@
 (def job [:wizard :rogue :healer :warrior])
 
 (defn ^:bantu retrieve
-  [^:int integer
-   ^:float float
-   ^:string text
-   ^:boolean boolean?
-   ^{:enum job} enums
-   ^:coll coll
-   ^:multi multiline
-   ^:file file]
-  (str enums " " integer " " float " " text  " " boolean? " " coll " " multiline " " file))
+  [^{:type :number} number
+   ^{:type :text} text
+   ^{:type :checkbox} boolean?
+   ^{:type :enum :values #'job} enums
+   ^{:type :coll} coll
+   ^{:type :multi} multiline
+   ^{:type :file} file]
+  (str enums " " number " " text  " " boolean? " " coll " " multiline " " file))
 
 (defn ^:bantu do-it [] "やった！")
 
