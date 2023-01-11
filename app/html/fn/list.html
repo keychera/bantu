@@ -1,9 +1,9 @@
-<div class="grid grid-cols-1 sm:grid-cols-4">
+<div class="flex-row md:flex">
     {% for fn in fns %}
     <div hx-get="/fn/{{fn.ns}}/{{fn.name}}?p" hx-target="#main" hx-push-url="/fn/{{fn.ns}}/{{fn.name}}"
-        class="w-fit p-2 mb-2 flex-row rounded-md border border-2 border-gray-500 cursor-pointer">
-        <pre class="w-fit py-1 px-3 text-sm bg-gray-200">{{fn.ns}}</pre>
-        <p class="m-2 text-2xl">{{fn.name}}</p>
+        class="w-fit mb-4 mr-4 p-2 rounded-md border border-2 border-gray-500 cursor-pointer">
+        <pre class="inline-block align-middle w-fit h-fit py-1 px-2 text-sm bg-gray-200">{{fn.ns}}</pre>
+        <pre class="inline-block align-middle w-fit h-fit py-1 px-2 text-xl">({{fn.name}})</pre>
     </div>
     {% endfor %}
 </div>
