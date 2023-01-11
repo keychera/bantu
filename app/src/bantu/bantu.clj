@@ -22,15 +22,15 @@
 (defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "anki/connect.html" {}))
 (defn ^{:sidebar "doc"} intro [] "intro")
-(defn ^{:sidebar "fn" :title "fn()"} fn-page [] 
-  "<a href=\"/fn/funrepo.fns\">funrepo.fns</a>")
+(defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "fn()"} 
+  fn-page [] (fn-list-ui 'funrepo.fns))
 
 ;; engine
 (defn render-sidebars [selected]
   (->> [#'hello #'doc #'anki #'fn-page]
        (map (fn [handler]
-              (let [{:keys [sidebar title]} (meta handler)]
-                (render-file "sidebar.html" {:url sidebar :title title :selected (= sidebar selected)}))))
+              (let [{:keys [sidebar url title]} (meta handler)]
+                (render-file "sidebar.html" {:url (or url sidebar) :title title :selected (= sidebar selected)}))))
        (reduce str)))
 
 (defn part? [req] (= "p" (:query-string req)))
@@ -50,7 +50,6 @@
       [:get ["doc"]] (route #'doc)
       [:get ["anki"]] (route #'anki)
       [:get ["doc" "intro"]] (route #'intro) 
-      [:get ["fn"]] (route #'fn-page)
       [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
 
