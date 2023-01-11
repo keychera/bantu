@@ -18,50 +18,40 @@
   [main opts] (render-file "app.html" (merge {:render-main main} opts)))
 
 ;; components
-(defn hello [] {:sidebar "hello" :body "hello"})
-(defn doc [] {:sidebar "doc" :body (render-file "doc.html" {})})
-(defn anki [] {:sidebar "anki" :body (render-file "anki/connect.html" {})})
-(defn intro [] {:sidebar "doc" :body "intro"})
-(defn user [id] {:body (str "user is " id)})
+(defn ^{:sidebar "hello" :title "Hello"} hello [] "hello")
+(defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
+(defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "anki/connect.html" {}))
+(defn ^{:sidebar "doc"} intro [] "intro")
 
-;; sidebars
-(defmacro sidebar-maps [& syms]
-  (zipmap (map (comp name :handler) syms) syms))
-
-(def sidebars (sidebar-maps
-               {:handler hello :text "Hello!"}
-               {:handler doc :text "Doc"}
-               {:handler anki :text "Anki"}))
-
+;; engine
 (defn render-sidebars [selected]
-  (->> sidebars
-       (map (fn [[name {:keys [text]}]]
-              (render-file "sidebar.html" {:url name :text text :selected (= name selected)})))
+  (->> [#'hello #'doc #'anki]
+       (map (fn [handler]
+              (let [{:keys [sidebar title]} (meta handler)]
+                (render-file "sidebar.html" {:url sidebar :title title :selected (= sidebar selected)}))))
        (reduce str)))
 
 (defn part? [req] (= "p" (:query-string req)))
 
-(defn component-route [partial component]
-  (if partial component
-      (let [{:keys [sidebar body]} component]
-        {:body (app body {:render-sidebars (render-sidebars sidebar)})})))
+(defn sidebar-route [partial? handler & args]
+  (if partial? {:body (apply handler args)}
+      (let [{:keys [sidebar]} (meta handler)]
+        {:body (app (apply handler args) {:render-sidebars (render-sidebars sidebar)})})))
 
 (defn router [req]
   (let [paths (-> (:uri req) (str/split #"/") rest vec)
         verb (:request-method req)
-        route (partial component-route (part? req))]
+        route (partial sidebar-route (part? req))]
     (match [verb paths]
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
-      [:get ["hello"]] (route (hello))
-      [:get ["doc"]] (route (doc))
-      [:get ["anki"]] (route (anki))
-      [:get ["doc" "intro"]] (route (intro))
-      [:get ["user" id]] (route (user id))
-      
-      [:get ["fn"]] (route (fn-list-ui 'funrepo.fns))
-      [:get ["fn" name]] (route (fn-ui name))
-      
+      [:get ["hello"]] (route #'hello)
+      [:get ["doc"]] (route #'doc)
+      [:get ["anki"]] (route #'anki)
+      [:get ["doc" "intro"]] (route #'intro)
+      [:get ["fn" ns-val]] (route (fn-list-ui (symbol ns-val)))
+      [:get ["fn" ns-val name]] (route (fn-ui (str "#'" ns-val "/" name)))
+
       [:post ["connect-anki"]] {:as-async connect-anki}
-      
+
       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))
