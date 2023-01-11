@@ -1,0 +1,8 @@
+<ul>
+    {% for fn in fns %}
+    <li>
+        <p>{{fn.ref|safe}}</p>
+        <p>{{fn.name}}</p>
+    </li>
+    {% endfor %}
+</ul>

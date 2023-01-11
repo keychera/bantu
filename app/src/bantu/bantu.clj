@@ -1,5 +1,6 @@
 (ns bantu.bantu
-  (:require [clojure.core.match :refer [match]]
+  (:require [bantu.fn-ui :refer [fn-ui fn-list-ui]]
+            [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [funrepo.anki :as anki]
@@ -56,6 +57,9 @@
       [:get ["anki"]] (route (anki))
       [:get ["doc" "intro"]] (route (intro))
       [:get ["user" id]] (route (user id))
+      
+      [:get ["fn"]] (route (fn-list-ui 'funrepo.fns))
+      [:get ["fn" name]] (route (fn-ui name))
       
       [:post ["connect-anki"]] {:as-async connect-anki}
       
