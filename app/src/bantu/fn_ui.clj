@@ -6,7 +6,8 @@
   (require namespace)
   (let [fns (->> (vals (ns-publics 'funrepo.fns))
                  (map #(merge {:ref %} (meta %))) (filter :bantu)
-                 (map #(select-keys % [:ref :name])))]
+                 (map #(select-keys % [:ref :name]))
+                 (map #(merge % {:ns namespace})))]
     (render-file "fn/list.html" {:fns fns})))
 
 (defn fn-ref [ref-string]

@@ -1,8 +1,9 @@
-<ul>
+<div class="grid grid-cols-1 sm:grid-cols-4">
     {% for fn in fns %}
-    <li>
-        <p>{{fn.ref|safe}}</p>
-        <p>{{fn.name}}</p>
-    </li>
+    <div hx-get="/fn/{{fn.ns}}/{{fn.name}}?p" hx-target="#main" hx-push-url="/fn/{{fn.ns}}/{{fn.name}}"
+        class="w-fit p-2 mb-2 flex-row rounded-md border border-2 border-gray-500 cursor-pointer">
+        <pre class="w-fit py-1 px-3 text-sm bg-gray-200">{{fn.ns}}</pre>
+        <p class="m-2 text-2xl">{{fn.name}}</p>
+    </div>
     {% endfor %}
-</ul>
+</div>
