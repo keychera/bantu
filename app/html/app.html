@@ -6,8 +6,8 @@
     <script src="https://unpkg.com/hyperscript.org@0.9.7"></script>
 </head>
 
-<body class="flex flex-row">
-    <div id="wrapper" class="h-fit grid grid-cols-[6rem_auto]">
+<body class="flex flex-row w-screen">
+    <div id="wrapper" class="w-full h-fit grid grid-cols-[6rem_auto]">
         <div id="header" class="col-span-2 px-5 pt-4 pb-2 bg-slate-300">
             <a href="/" class="text-xl">bantu</a>
         </div>
@@ -16,9 +16,9 @@
                 {{render-sidebars|safe}}
             </div>
         </aside>
-        <div id="main" class="p-5 h-screen w-screen bg-gray-100">
+        <div id="main" class="p-5 h-screen bg-gray-100">
             {% if render-main %} {{render-main|safe}}
-            {% else %} {% include "ex/landing.html" %}
+            {% else %} {% include "landing.html" %}
             {% endif %}
         </div>
     </div>

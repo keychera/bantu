@@ -1,0 +1,9 @@
+<div>
+    <form id="{{name}}-form" hx-post="{{post-url}}" hx-target="#{{name}}-result">
+        <div class="w-64 grid grid-cols-1">
+            {{input-ui|safe}}
+        </div>
+        <button type="submit" class="my-2 p-1 text-2xl">{{name}}</button>
+    </form>
+    <div id="{{name}}-result"></div>
+</div>

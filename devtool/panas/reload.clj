@@ -15,11 +15,12 @@
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
 (defonce port 4242)
-(defonce url (str "http://localhost:" port "/"))
+(defonce url (str "http://localhost:" port))
 (defonce panas-ch (atom nil))
 (defonce current-url (atom "/"))
 
 (defn refresh-body! [embedded-server ch]
+  (println "[panas] refreshing" (str url @current-url))
   (if (nil? ch) (println "[panas][warn] no opened panas client!")
       (send! ch {:body (let [res (embedded-server {:request-method :get :uri @current-url}) ;; assuming :get url which response is html>body
                              hick-res (utils/convert-to (:body res) :hickory)
@@ -109,8 +110,7 @@
                         (str/ends-with? changed-file ".clj") (do (println "[panas][clj] reloading" changed-file)
                                                                  (load-file changed-file))
                         (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
-                        :else (println "[panas][other] changes on" changed-file)))
-                    (println "[panas] refreshing" url)
+                        :else (println "[panas][other] changes on" changed-file))) 
                     (refresh-body! router @panas-ch)
                     (catch Exception e
                       (let [{:keys [cause]} (Throwable->map e)]
