@@ -22,7 +22,7 @@
 (defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "anki/connect.html" {}))
 (defn ^{:sidebar "doc"} intro [] "intro")
-(defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "fn()"} 
+(defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "fn()"}
   fn-page [] (fn-list-ui 'funrepo.fns))
 
 ;; engine
@@ -40,8 +40,17 @@
       (let [{:keys [sidebar]} (meta handler)]
         {:body (app (apply handler args) {:render-sidebars (render-sidebars sidebar)})})))
 
+;; resolving empty inputs using this strategy https://stackoverflow.com/a/1992745/8812880
+;; order sensitive following original fn parameters
+(defn resolve-empty [payload]
+  (some-> payload (java.net.URLDecoder/decode) (str/split #"&")
+          (->> (map #(str/split % #"="))
+               (remove #(= (count %) 1)) 
+               vec (into {}))
+          (update-vals #(when-not (= % "--empty") %))))
+
 (defn router [req]
-  (let [paths (-> (:uri req) (str/split #"/") rest vec)
+  (let [paths (some-> (:uri req) (str/split #"/") rest vec)
         verb (:request-method req)
         route (partial sidebar-route (part? req))]
     (match [verb paths]
@@ -49,9 +58,17 @@
       [:get ["hello"]] (route #'hello)
       [:get ["doc"]] (route #'doc)
       [:get ["anki"]] (route #'anki)
-      [:get ["doc" "intro"]] (route #'intro) 
+      [:get ["doc" "intro"]] (route #'intro)
       [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
+      [:post ["fn" ns-val name]] (let [ref-string (str "#'" ns-val "/" name)
+                                       fn-ref (-> ref-string read-string eval)
+                                       payload (some-> req :body (io/reader :encoding "UTF-8") slurp)
+                                       args (or (some-> payload resolve-empty vals) [])
+                                       res (apply fn-ref args)]
+                                   {:body (str "<p>" fn-ref "</p>"
+                                               "<p>" res "</p>"
+                                               "<p>" args "</p>")})
 
       [:post ["connect-anki"]] {:as-async connect-anki}
 

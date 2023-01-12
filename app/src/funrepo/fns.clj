@@ -8,7 +8,7 @@
    ^{:type :coll} coll
    ^{:type :multi} multiline
    ^{:type :file} file]
-  (str enums " " number " " text  " " boolean? " " coll " " multiline " " file))
+  (str "retrieved: " enums " " number " " text  " " boolean? " " coll " " multiline " " file))
 
 (defn ^:bantu do-it [] "やった！")
 
