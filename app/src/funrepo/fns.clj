@@ -12,4 +12,4 @@
 
 (defn ^:bantu do-it [] "やった！")
 
-(defn do-math [] (+ 1 2))
+(defn ^:bantu do-math [inp] (+ 1 (or inp 0)))

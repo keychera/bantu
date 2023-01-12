@@ -65,7 +65,7 @@
                                        fn-ref (-> ref-string read-string eval)
                                        payload (some-> req :body (io/reader :encoding "UTF-8") slurp)
                                        args (or (some-> payload resolve-empty vals) [])
-                                       res (apply fn-ref args)]
+                                       res (try (apply fn-ref args) (catch Exception e (-> e Throwable->map :cause)))]
                                    {:body (str "<p>" fn-ref "</p>"
                                                "<p>" res "</p>"
                                                "<p>" args "</p>")})
