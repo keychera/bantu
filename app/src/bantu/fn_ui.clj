@@ -11,24 +11,26 @@
     (render-file "fn/list.html" {:fns fns})))
 
 (defn fn-ref [ref-string]
-  (let [fn-ref (-> ref-string read-string)
+  (let [ref (-> ref-string read-string)
         ns-symbol (-> (re-matches #"#('.*)\/.*" ref-string) (get 1) read-string)]
     (require (eval ns-symbol))
-    (meta (eval fn-ref))))
+    (meta (eval ref))))
 
 (defn arglist->ui [arglists]
   (->> arglists
-       (map #(merge {:arg %} (meta %))) 
-       (map #(render-file "fn/input.html" {:type (:type %)
-                                           :id (:arg %)
+       (map #(merge {:arg %} (meta %)))
+       (map #(render-file "fn/input.html" {:type (name (:type %))
+                                           :id (:arg %) 
                                            :placeholder (:arg %)}))
        (str/join "\n")))
 
 (defn ^{:sidebar "fn"} fn-ui [ref-string]
   (let [ref (fn-ref ref-string)
+        ns-name (-> (re-matches #"#'(.*)\/.*" ref-string) (get 1))
         {name :name [arglists] :arglists} ref
         input-ui (arglist->ui arglists)]
     (render-file "fn/ui.html" {:name name
+                               :post-url (str "/fn/" ns-name "/" name)
                                :input-ui input-ui})))
 
 (comment
