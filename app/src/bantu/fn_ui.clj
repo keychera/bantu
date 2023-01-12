@@ -19,7 +19,7 @@
 (defn- arglist->ui [arglists]
   (->> arglists
        (map #(merge {:arg %} (meta %)))
-       (map #(render-file "fn/input.html" {:type (name (:type %))
+       (map #(render-file "fn/input.html" {:type (some-> % :type name)
                                            :id (:arg %)
                                            :placeholder (:arg %)}))
        (str/join "\n")))
