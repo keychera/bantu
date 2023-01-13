@@ -1,6 +1,7 @@
 (ns bantu.fn-ui
-  (:require [selmer.parser :refer [render-file]]
-            [clojure.string :as str]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [selmer.parser :refer [render-file]]))
 
 (defn ^{:sidebar "fn"} fn-list-ui [namespace]
   (try
@@ -55,6 +56,25 @@
        (catch  Exception e
          (let [cause (-> e Throwable->map :cause)]
            (str "<p>" cause "</p>")))))
+
+;; resolving empty inputs using this strategy https://stackoverflow.com/a/1992745/8812880
+;; order sensitive following original fn parameters
+(defn- resolve-empty [payload]
+  (some-> payload (java.net.URLDecoder/decode) (str/split #"&")
+          (->> (map #(str/split % #"="))
+               (remove #(= (count %) 1))
+               vec (into {}))
+          (update-vals #(when-not (= % "--empty") %))))
+
+(defn execute-fn [req ns-val name]
+  (let [ref-string (str "#'" ns-val "/" name)
+        fn-ref (-> ref-string read-string eval)
+        payload (some-> req :body (io/reader :encoding "UTF-8") slurp)
+        args (or (some-> payload resolve-empty vals) [])
+        res (try (apply fn-ref args) (catch Exception e (-> e Throwable->map :cause)))]
+    {:body (str "<p>" fn-ref "</p>"
+                "<p>" res "</p>"
+                "<p>" args "</p>")}))
 
 (comment
   (fn-list-ui 'funrepo.fns)
