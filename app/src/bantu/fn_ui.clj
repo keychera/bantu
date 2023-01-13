@@ -27,12 +27,16 @@
 (defmethod arg->ui :checkbox [arg-data]
   (render-file "fn/input/checkbox.html" arg-data))
 
+(defmethod arg->ui :enum [arg-data]
+  (println arg-data)
+  (render-file "fn/input/enum.html" arg-data))
+
 (defn- arglist->ui [arglists]
   (->> arglists
        (map #(let [data (meta %)
                    type-key (some-> data :type)
                    type (some-> type-key name)]
-               {:data data :type-key type-key :type type :id % :placeholder %}))
+               {:data data :type-key type-key :type type :name % :placeholder %}))
        (map #(str (render-file "fn/input/hidden.html" %)
                   (arg->ui %)))
        (str/join "\n")))
