@@ -28,8 +28,10 @@
   (render-file "fn/input/checkbox.html" arg-data))
 
 (defmethod arg->ui :enum [arg-data]
-  (println arg-data)
   (render-file "fn/input/enum.html" arg-data))
+
+(defmethod arg->ui :file [arg-data]
+  (render-file "fn/input/file.html" arg-data))
 
 (defn- arglist->ui [arglists]
   (->> arglists

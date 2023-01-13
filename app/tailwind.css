@@ -27,15 +27,16 @@
 }
 
 @layer base {
-    input:focus {
-        outline-width: 0;
-    }
-
     input[type='number']::-webkit-outer-spin-button,
     input[type='number']::-webkit-inner-spin-button,
     input[type='number'] {
         -webkit-appearance: none;
         -moz-appearance: textfield !important;
+    }
+
+    /* https://stackoverflow.com/a/1457976/8812880 */
+    input:focus {
+        outline-width: 0;
     }
 }
 
