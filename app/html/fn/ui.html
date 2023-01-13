@@ -1,9 +1,12 @@
-<div>
-    <form id="{{name}}-form" hx-post="{{post-url}}" hx-target="#{{name}}-result">
-        <div class="w-64 grid grid-cols-1">
+<div class="w-fit p-4 shadow-md bg-white">
+    <form id="{{name}}-form" hx-post="{{post-url}}" hx-target="#{{name}}-result" class="mb-0">
+        <div class="w-80 grid grid-cols-4 gap-2">
             {{input-ui|safe}}
         </div>
-        <button type="submit" class="my-2 p-1 text-2xl">{{name}}</button>
+        <button type="submit" class="px-2 py-4 text-xl">
+            <!-- this should in one line -->
+            <pre class="inline-block align-middle">({{name}}</pre><div class="inline-block align-middle fun-indicator"> {% include "public/svg/loading.svg" %}  </div><pre class="inline-block align-middle">)</pre>
+        </button>
+        <pre id="{{name}}-result" class="fun-reverse-indicator p-3 bg-gray-100"></pre>
     </form>
-    <div id="{{name}}-result"></div>
 </div>
