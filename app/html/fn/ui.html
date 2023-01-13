@@ -1,6 +1,6 @@
 <div class="w-fit p-4 shadow-md bg-white">
     <form id="{{name}}-form" hx-post="{{post-url}}" hx-target="#{{name}}-result" class="mb-0">
-        <div class="w-80 grid grid-cols-1">
+        <div class="w-80 grid grid-cols-4 gap-2">
             {{input-ui|safe}}
         </div>
         <button type="submit" class="px-2 py-4 text-xl "><pre>({{name}})</pre></button>

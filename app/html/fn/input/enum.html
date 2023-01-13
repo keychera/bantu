@@ -1,8 +1,6 @@
-<div class="p-1">
-    <label class="inline-block align-middle mr-2">{{placeholder}}</label>
-    <select class="inline-block align-middle" name="{{name}}">
-        {% for value in data.values %}
-        <option>{{value}}</option>
-        {% endfor %}
-    </select>
-</div>
+<label class="inline-block align-middle ml-1 mb-2">{{placeholder}}</label>
+<select class="inline-block align-middle col-span-3 mb-2" name="{{name}}">
+    {% for value in data.values %}
+    <option>{{value}}</option>
+    {% endfor %}
+</select>
