@@ -2,31 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-.normal-indicator{
+.normal-indicator {
     display: none;
 }
 
-.htmx-request .normal-indicator{
+.htmx-request .normal-indicator {
     display: flex;
 }
 
-.htmx-request.normal-indicator{
+.htmx-request.normal-indicator {
     display: flex;
 }
 
-.reverse-indicator{
+.reverse-indicator {
     display: flex;
 }
 
-.htmx-request .reverse-indicator{
+.htmx-request .reverse-indicator {
     display: none;
 }
 
-.htmx-request.reverse-indicator{
+.htmx-request.reverse-indicator {
     display: none;
+}
+
+.fun-indicator {
+    scale: 0;
+    margin-left: 0;
+    margin-right: 0;
+    width: 0px;
+    height: 0px;
+    transition: all .2s ease-in-out;
+}
+
+.htmx-request .fun-indicator {
+    scale: 1;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    width: 25px;
+    height: 25px;
+    transition: all .2s ease-in-out;
+    display: inline-block;
+}
+
+.htmx-request.fun-indicator {
+    scale: 1;
+    width: 25px;
+    height: 25px;
+    transition: all .2s ease-in-out;
+    display: inline-block;
+}
+
+.fun-reverse-indicator {
+    opacity: 1;
+    transition: all .2s ease-in-out;
+}
+
+.htmx-request .fun-reverse-indicator {
+    opacity: 0.3;
+    transition: all .2s ease-in-out;
+}
+
+.htmx-request.fun-reverse-indicator {
+    opacity: 0.3;
+    transition: all .2s ease-in-out;
 }
 
 @layer base {
+
     input[type='number']::-webkit-outer-spin-button,
     input[type='number']::-webkit-inner-spin-button,
     input[type='number'] {

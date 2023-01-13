@@ -3,7 +3,10 @@
         <div class="w-80 grid grid-cols-4 gap-2">
             {{input-ui|safe}}
         </div>
-        <button type="submit" class="px-2 py-4 text-xl "><pre>({{name}})</pre></button>
+        <button type="submit" class="px-2 py-4 text-xl">
+            <!-- this should in one line -->
+            <pre class="inline-block align-middle">({{name}}</pre><div class="inline-block align-middle fun-indicator"> {% include "public/svg/loading.svg" %}  </div><pre class="inline-block align-middle">)</pre>
+        </button>
+        <pre id="{{name}}-result" class="fun-reverse-indicator p-3 bg-gray-100"></pre>
     </form>
-    <pre id="{{name}}-result" class="p-3 bg-gray-100"></pre>
 </div>
