@@ -20,12 +20,21 @@
     (require (eval ns-symbol))
     (meta (eval ref))))
 
+(defmulti arg->ui :type-key)
+(defmethod arg->ui :default [arg-data]
+  (render-file "fn/input/default.html" arg-data))
+
+(defmethod arg->ui :checkbox [arg-data]
+  (render-file "fn/input/checkbox.html" arg-data))
+
 (defn- arglist->ui [arglists]
   (->> arglists
-       (map #(merge {:arg %} (meta %)))
-       (map #(render-file "fn/input.html" {:type (some-> % :type name)
-                                           :id (:arg %)
-                                           :placeholder (:arg %)}))
+       (map #(let [data (meta %)
+                   type-key (some-> data :type)
+                   type (some-> type-key name)]
+               {:data data :type-key type-key :type type :id % :placeholder %}))
+       (map #(str (render-file "fn/input/hidden.html" %)
+                  (arg->ui %)))
        (str/join "\n")))
 
 (defn ^{:sidebar "fn"} fn-ui [ref-string]
