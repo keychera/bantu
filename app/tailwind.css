@@ -27,6 +27,9 @@
 }
 
 @layer base {
+    input:focus {
+        outline-width: 0;
+    }
 
     input[type='number']::-webkit-outer-spin-button,
     input[type='number']::-webkit-inner-spin-button,

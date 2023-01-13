@@ -8,6 +8,7 @@
    ^{:type :coll} coll
    ^{:type :multi} multiline
    ^{:type :file} file]
+  (Thread/sleep 1000)
   (str "retrieved: " enums " " number " " text  " " boolean? " " coll " " multiline " " file))
 
 (defn ^:bantu do-it [] "やった！")
