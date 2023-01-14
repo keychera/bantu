@@ -77,7 +77,8 @@
         paths (vec (rest (str/split uri #"/")))]
     (when (and (= verb :get)
                (not (:websocket? req))
-               (not (str/starts-with? uri "/css")))
+               (not (str/starts-with? uri "/css"))
+               (not (str/starts-with? uri "/favicon.ico")))
       (reset! current-url uri)
       (println "currently on" uri))
     (match [verb paths]
