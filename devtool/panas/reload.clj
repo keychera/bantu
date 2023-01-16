@@ -1,5 +1,6 @@
 (ns panas.reload
-  (:require [bantu.bantu :as bantu]
+  (:require [babashka.nrepl.server :as nrepl]
+            [bantu.bantu :as bantu]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
@@ -77,7 +78,8 @@
         paths (vec (rest (str/split uri #"/")))]
     (when (and (= verb :get)
                (not (:websocket? req))
-               (not (str/starts-with? uri "/css")))
+               (not (str/starts-with? uri "/css"))
+               (not (str/starts-with? uri "/favicon.ico")))
       (reset! current-url uri)
       (println "currently on" uri))
     (match [verb paths]
@@ -99,6 +101,7 @@
   ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
   (let [router (partial #'async-wrapper #'bantu/router)]
     (println "[panas] starting")
+    (nrepl/start-server!)
     (start-panasin router)
     (fw/watch app-dir
               (fn [event]
@@ -110,7 +113,7 @@
                         (str/ends-with? changed-file ".clj") (do (println "[panas][clj] reloading" changed-file)
                                                                  (load-file changed-file))
                         (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
-                        :else (println "[panas][other] changes on" changed-file))) 
+                        :else (println "[panas][other] changes on" changed-file)))
                     (refresh-body! router @panas-ch)
                     (catch Exception e
                       (let [{:keys [cause]} (Throwable->map e)]
