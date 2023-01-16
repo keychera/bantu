@@ -4,10 +4,9 @@
   [^{:type :number} number
    ^{:type :text} text
    ^{:type :checkbox} boolean?
-   ^{:type :enum :values ["wizard" "rogue" "healer" "warrior"]} enums
-   ^{:type :file} file]
+   ^{:type :enum :values ["wizard" "rogue" "healer" "warrior"]} enums]
   (Thread/sleep 1000)
-  (str "retrieved: " enums " " number " " text  " " boolean? " " file))
+  (str "retrieved: " enums " " number " " text  " " boolean?))
 
 (defn ^:bantu do-it [] "やった！")
 
