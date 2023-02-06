@@ -1,6 +1,7 @@
 (ns bantu.bantu
   (:require [bantu.anki.api :refer [anki anki-search anki-ws connect-anki]]
             [bantu.fn.ui :refer [execute-fn fn-list-ui fn-page fn-ui]]
+            [bantu.graph.analyze :refer [graph]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
@@ -34,7 +35,7 @@
     (match [verb paths]
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route #'hello)
-      
+      [:get ["graph"]] (route #'graph)
       [:get ["anki"]] (route #'anki)
       [:get ["anki-ws"]] (anki-ws req)
       
