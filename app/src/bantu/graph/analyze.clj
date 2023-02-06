@@ -1,5 +1,5 @@
 (ns bantu.graph.analyze
-  (:require [bantu.common :refer [deforder syms->map]]
+  (:require [bantu.common :refer [deforder syms->map to-file]]
             [clojure.java.io :as io]
             [selmer.parser :refer [render-file]])
   (:import [java.time LocalDateTime]
@@ -55,7 +55,8 @@
 
 (->> (-> "build-reports/kotlin-build-ric" io/resource io/file .listFiles)
      (map analyze-build)
-     (sort by-build-date))
+     (sort by-build-date)
+     (to-file "./out/res.edn"))
 
 (defn ^{:sidebar "graph" :title "Graph"} graph []
   (render-file "bantu/graph/svg.html" {}))
