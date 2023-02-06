@@ -27,7 +27,8 @@
                       :compileTestJava
                       :processTestResources
                       :testClasses
-                      :icip])
+                      :icip
+                      :test])
 
 (defn by-task-order [{t1 :task-name} {t2 :task-name}]
   (compare (task-order (keyword t1)) (task-order (keyword t2))))
