@@ -1,0 +1,1 @@
+{:lint-as {bantu.common/deforder clojure.core/defonce}}
