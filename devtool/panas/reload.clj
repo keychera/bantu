@@ -1,17 +1,19 @@
 (ns panas.reload
-  (:require [babashka.nrepl.server :as nrepl]
+  (:require [babashka.fs :as fs]
+            [babashka.nrepl.server :as nrepl]
+            [babashka.pods :as pods]
             [bantu.bantu :as bantu]
+            [clojure.core.async :refer [<! go-loop timeout]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel run-server send!]]
-            [babashka.pods :as pods]
             [pod.retrogradeorbit.bootleg.utils :as utils]
             [pod.retrogradeorbit.hickory.select :as s]
             [serve :refer [async-wrapper]]))
 
-(pods/load-pod 'org.babashka/filewatcher "0.0.1")
-(require '[pod.babashka.filewatcher :as fw])
+(pods/load-pod 'org.babashka/fswatcher "0.0.3")
+(require '[pod.babashka.fswatcher :as fw])
 
 ;; https://http-kit.github.io/server.html#stop-server
 ;; https://cognitect.com/blog/2013/06/04/clojure-workflow-reloaded
@@ -20,8 +22,8 @@
 (defonce panas-ch (atom nil))
 (defonce current-url (atom "/"))
 
-(defn refresh-body! [embedded-server ch]
-  (println "[panas] refreshing" (str url @current-url))
+(defn swap-body! [embedded-server ch]
+  (println "[panas] swapping" (str url @current-url))
   (if (nil? ch) (println "[panas][warn] no opened panas client!")
       (send! ch {:body (let [res (embedded-server {:request-method :get :uri @current-url}) ;; assuming :get url which response is html>body
                              hick-res (utils/convert-to (:body res) :hickory)
@@ -93,7 +95,7 @@
   (let [to-embed (partial panas-reload server-to-embed)]
     (run-server to-embed {:port port :thread 12})))
 
-(def app-dir (-> (io/resource "pivot") .getPath (str/split #"/") drop-last drop-last
+(def app-dir (-> (io/resource "pivot") .getPath (str/split (re-pattern (str "\\Q" fs/file-separator "\\E"))) drop-last drop-last
                  (->> (reduce #(str %1 "/" %2)))
                  (str "/app")))
 
@@ -103,21 +105,27 @@
     (println "[panas] starting")
     (nrepl/start-server!)
     (start-panasin router)
-    (fw/watch app-dir
-              (fn [event]
-                (when (= :write (:type event))
-                  (println "======")
-                  (try
-                    (let [changed-file (:path event)]
-                      (cond
-                        (str/ends-with? changed-file ".clj") (do (println "[panas][clj] reloading" changed-file)
-                                                                 (load-file changed-file))
-                        (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
-                        :else (println "[panas][other] changes on" changed-file)))
-                    (refresh-body! router @panas-ch)
-                    (catch Exception e
-                      (let [{:keys [cause]} (Throwable->map e)]
-                        (println) (println "[panas][ERROR]" cause) (println))))))
-              {:delay-ms 100})
+    (println "[panas] watching" app-dir)
+    (let [latest-event (atom nil)
+          event-handler (fn [event] 
+                          (when (= :write (:type event))
+                            (println "======")
+                            (try
+                              (let [changed-file (:path event)]
+                                (cond
+                                  (str/ends-with? changed-file ".clj") (do (println "[panas][clj] reloading" changed-file)
+                                                                           (load-file changed-file))
+                                  (str/ends-with? changed-file ".html") (println "[panas][html] changes on" changed-file)
+                                  :else (println "[panas][other] changes on" changed-file)))
+                              (swap-body! router @panas-ch)
+                              (catch Exception e
+                                (let [{:keys [cause]} (Throwable->map e)]
+                                  (println) (println "[panas][ERROR]" cause) (println))))))]
+      (fw/watch app-dir (fn [e] (reset! latest-event e)) {:recursive true :delay-ms 100})
+      (go-loop [time-unit 1]
+        (<! (timeout 100))
+        (let [[event _] (reset-vals! latest-event nil)]
+          (some-> event event-handler))
+        (recur (inc time-unit))))
     (println "[panas] serving" url)
     @(promise)))
