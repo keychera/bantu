@@ -7,11 +7,10 @@
             [selmer.parser :refer [render-file]]))
 
 (defn app
-  [main opts] (render-file "app.html" (merge {:render-main main} opts)))
+  [main opts] (render-file "bantu/app.html" (merge {:render-main main} opts)))
 
 ;; components
 (defn ^{:sidebar "hello" :title "Hello"} hello [] "hello")
-(defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "bantu/anki/connect.html" {}))
 (defn ^{:sidebar "doc"} intro [] "intro")
 (defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "fn()"}
@@ -19,10 +18,10 @@
 
 ;; engine
 (defn render-sidebars [selected]
-  (->> [#'hello #'doc #'anki #'fn-page]
+  (->> [#'hello #'anki #'fn-page]
        (map (fn [handler]
               (let [{:keys [sidebar url title]} (meta handler)]
-                (render-file "sidebar.html" {:url (or url sidebar) :title title :selected (= sidebar selected)}))))
+                (render-file "bantu/sidebar.html" {:url (or url sidebar) :title title :selected (= sidebar selected)}))))
        (reduce str)))
 
 (defn part? [req] (= "p" (:query-string req)))
@@ -39,7 +38,6 @@
     (match [verb paths]
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route #'hello)
-      [:get ["doc"]] (route #'doc)
       [:get ["anki"]] (route #'anki)
       [:get ["doc" "intro"]] (route #'intro)
       
