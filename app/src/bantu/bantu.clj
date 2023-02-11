@@ -1,5 +1,5 @@
 (ns bantu.bantu
-  (:require [bantu.anki.api :refer [anki connect-anki]]
+  (:require [bantu.anki.api :refer [anki anki-ws connect-anki]]
             [bantu.fn.ui :refer [execute-fn fn-list-ui fn-page fn-ui]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
@@ -34,7 +34,9 @@
     (match [verb paths]
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route #'hello)
+      
       [:get ["anki"]] (route #'anki)
+      [:get ["anki-ws"]] (anki-ws req)
       
       [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
