@@ -1,18 +1,10 @@
 (ns bantu.bantu
-  (:require [bantu.fn.ui :refer [execute-fn fn-list-ui fn-ui]]
+  (:require [bantu.anki.api :refer [connect-anki]]
+            [bantu.fn.ui :refer [execute-fn fn-list-ui fn-ui]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [funrepo.anki :as anki]
             [selmer.parser :refer [render-file]]))
-
-(defn connect-anki [_]
-  (let [anki-response (try (anki/connect) (catch Exception _ nil))]
-    (if anki-response
-      {:status 200
-       :body (render-file "anki/success.html" {:anki-connect-ver (:body anki-response)})}
-      {:status 200
-       :body (render-file "anki/failed.html" {})})))
 
 (defn app
   [main opts] (render-file "app.html" (merge {:render-main main} opts)))
@@ -20,7 +12,7 @@
 ;; components
 (defn ^{:sidebar "hello" :title "Hello"} hello [] "hello")
 (defn ^{:sidebar "doc" :title "Doc"} doc [] (render-file "doc.html" {}))
-(defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "anki/connect.html" {}))
+(defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "bantu/anki/connect.html" {}))
 (defn ^{:sidebar "doc"} intro [] "intro")
 (defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "fn()"}
   fn-page [] (fn-list-ui 'funrepo.fns))
