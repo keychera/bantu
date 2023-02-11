@@ -1,5 +1,5 @@
 (ns bantu.bantu
-  (:require [bantu.fn-ui :refer [execute-fn fn-list-ui fn-ui]]
+  (:require [bantu.fn.ui :refer [execute-fn fn-list-ui fn-ui]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
