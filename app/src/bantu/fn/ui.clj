@@ -1,4 +1,4 @@
-(ns bantu.fn-ui
+(ns bantu.fn.ui
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [selmer.parser :refer [render-file]]))
@@ -10,7 +10,7 @@
                    (map #(merge {:ref %} (meta %))) (filter :bantu)
                    (map #(select-keys % [:ref :name]))
                    (map #(merge % {:ns namespace})))]
-      (render-file "fn/list.html" {:fns fns}))
+      (render-file "bantu/fn/list.html" {:fns fns}))
     (catch  Exception e
       (let [cause (-> e Throwable->map :cause)]
         (str "<p>" cause "</p>")))))
@@ -23,16 +23,16 @@
 
 (defmulti arg->ui :type-key)
 (defmethod arg->ui :default [arg-data]
-  (render-file "fn/input/default.html" arg-data))
+  (render-file "bantu/fn/input/default.html" arg-data))
 
 (defmethod arg->ui :checkbox [arg-data]
-  (render-file "fn/input/checkbox.html" arg-data))
+  (render-file "bantu/fn/input/checkbox.html" arg-data))
 
 (defmethod arg->ui :enum [arg-data]
-  (render-file "fn/input/enum.html" arg-data))
+  (render-file "bantu/fn/input/enum.html" arg-data))
 
 (defmethod arg->ui :file [arg-data]
-  (render-file "fn/input/file.html" arg-data))
+  (render-file "bantu/fn/input/file.html" arg-data))
 
 (defn- arglist->ui [arglists]
   (->> arglists
@@ -40,7 +40,7 @@
                    type-key (some-> data :type)
                    type (some-> type-key name)]
                {:data data :type-key type-key :type type :name % :placeholder %}))
-       (map #(str (render-file "fn/input/hidden.html" %)
+       (map #(str (render-file "bantu/fn/input/hidden.html" %)
                   (arg->ui %)))
        (str/join "\n")))
 
@@ -50,7 +50,7 @@
              ref (fn-ref ns-symbol-str ref-string)
              {name :name [arglists] :arglists} ref
              input-ui (arglist->ui arglists)]
-         (render-file "fn/ui.html" {:name name
+         (render-file "bantu/fn/ui.html" {:name name
                                     :post-url (str "/fn/" ns-name "/" name)
                                     :input-ui input-ui}))
        (catch  Exception e
