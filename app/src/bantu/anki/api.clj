@@ -2,6 +2,7 @@
   (:require [babashka.curl :as curl]
             [babashka.process :refer [shell]]
             [clojure.core.async :refer [alt! chan close! thread timeout]]
+            [clojure.string :as str]
             [org.httpkit.server :refer [as-channel send!]]
             [selmer.parser :refer [render-file]]))
 
@@ -28,8 +29,13 @@
 (defonce anki-session (atom nil))
 (defonce clipboard-watcher (atom nil))
 
+
+(def clip-cmd (condp #(str/includes? %1 (some->> %2 (remove #{\ }) (apply str) str/lower-case)) (System/getProperty "os.name")
+                     "macosx" "pbpaste"
+                     "windows" "powershell clipboard"))
+
 (defn read-clipboard []
-  (-> (shell {:out :byte} "powershell clipboard") :out
+  (-> (shell {:out :byte} clip-cmd) :out
       (slurp :encoding "UTF-8")))
 
 (defn watch-clipboard [ws-ch]
