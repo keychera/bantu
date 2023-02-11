@@ -9,8 +9,7 @@
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel run-server send!]]
             [pod.retrogradeorbit.bootleg.utils :as utils]
-            [pod.retrogradeorbit.hickory.select :as s]
-            [serve :refer [async-wrapper]]))
+            [pod.retrogradeorbit.hickory.select :as s]))
 
 (pods/load-pod 'org.babashka/fswatcher "0.0.3")
 (require '[pod.babashka.fswatcher :as fw])
@@ -101,7 +100,7 @@
 
 (defn -main [& _]
   ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
-  (let [router (partial #'async-wrapper #'bantu/router)]
+  (let [router #'bantu/router]
     (println "[panas] starting")
     (nrepl/start-server!)
     (start-panasin router)

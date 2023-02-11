@@ -55,8 +55,7 @@
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
       [:post ["fn" ns-val name]] (execute-fn req ns-val name)
       
-
-      [:post ["connect-anki"]] {:as-async connect-anki}
+      [:post ["connect-anki"]] (connect-anki req)
 
       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))
