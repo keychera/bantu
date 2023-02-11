@@ -1,6 +1,5 @@
 (ns panas.reload
-  (:require [babashka.fs :as fs]
-            [babashka.nrepl.server :as nrepl]
+  (:require [babashka.nrepl.server :as nrepl]
             [babashka.pods :as pods]
             [bantu.bantu :as bantu]
             [clojure.core.async :refer [<! go-loop timeout]]
@@ -60,7 +59,7 @@
   (let [hick-seq (utils/convert-to (:body response) :hickory-seq)
         html? (->> hick-seq (map :tag) (filter #(= % :html)) not-empty?)]
     (if-not html? response
-            (let [;; conj with "\n"  ensure partition-by results in at least three element, destructuring [_ front] ignores it back
+            (let [;; conj with "\n"  ensure `partition-by` returns at least three element, destructuring [_ front] ignores it back
                   ;; TODO bug: this transformation causes emoji unicode to break
                   [[_ & front] [html] & rest] (partition-by #(= (:tag %) :html) (-> hick-seq (conj "\n")))
                   [[_ & body-front] [body] & body-rest] (partition-by #(= (:tag %) :body) (-> (:content html) seq (conj "\n")))
@@ -73,30 +72,29 @@
                   akar-seq (->> [front akar-html rest] (remove nil?) flatten seq)]
               (assoc response :body (utils/convert-to akar-seq :html))))))
 
-(defn panas-reload [embedded-server req]
-  (let [uri (:uri req) ;; probably need better way to detect reloadable url
-        verb (:request-method req)
-        paths (vec (rest (str/split uri #"/")))]
-    (when (and (= verb :get)
-               (not (:websocket? req))
-               (not (str/starts-with? uri "/css"))
-               (not (str/starts-with? uri "/favicon.ico")))
-      (reset! current-url uri)
-      (println "currently on" uri))
-    (match [verb paths]
-      [:get ["panas"]] (panas-websocket req)
-      :else (let [res (embedded-server req)]
-              (cond (:websocket? req) res
-                    (= (:async-channel req) (:body res)) res
-                    :else (with-akar res))))))
+(defn panas-middleware [handler]
+  (fn [req]
+    (let [uri (:uri req) ;; probably need better way to detect reloadable url
+          verb (:request-method req)
+          paths (vec (rest (str/split uri #"/")))]
+      (when (and (= verb :get)
+                 (not (:websocket? req))
+                 (not (str/starts-with? uri "/css"))
+                 (not (str/starts-with? uri "/favicon.ico")))
+        (reset! current-url uri)
+        (println "currently on" uri))
+      (match [verb paths]
+        [:get ["panas"]] (panas-websocket req)
+        :else (let [res (handler req)]
+                (cond (:websocket? req) res
+                      (= (:async-channel req) (:body res)) res
+                      :else (with-akar res)))))))
 
 (defn start-panasin [server-to-embed]
-  (let [to-embed (partial panas-reload server-to-embed)]
+  (let [to-embed (-> server-to-embed panas-middleware)]
     (run-server to-embed {:port port :thread 12})))
 
-(def app-dir (-> (io/resource "pivot") .getPath (str/split (re-pattern (str "\\Q" fs/file-separator "\\E"))) drop-last drop-last
-                 (->> (reduce #(str %1 "/" %2)))
-                 (str "/app")))
+(def app-dir (some-> (io/resource "pivot") .toURI (.resolve "../app") .toString (subs 6)))
 
 (defn -main [& _]
   ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
@@ -106,7 +104,7 @@
     (start-panasin router)
     (println "[panas] watching" app-dir)
     (let [latest-event (atom nil)
-          event-handler (fn [event] 
+          event-handler (fn [event]
                           (when (= :write (:type event))
                             (println "======")
                             (try
