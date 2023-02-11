@@ -1,4 +1,4 @@
-(ns bantu.anki.api 
+(ns bantu.anki.api
   (:require [babashka.curl :as curl]
             [selmer.parser :refer [render-file]]))
 
@@ -7,15 +7,16 @@
 
 (defn connect []
   (curl/get anki-connect
-            {:raw-args ["--retry-all-errors"
+            {:compressed false
+             :raw-args ["--retry-all-errors"
                         "--retry" "1"
                         "--retry-delay" "0"]}))
 
 (defn connect-anki [_]
-  (let [anki-response (try (connect) (catch Exception _ nil))]
-    (if anki-response
-      {:status 200
-       :body (render-file "bantu/anki/success.html" {:anki-connect-ver (:body anki-response)})}
-      {:status 200
-       :body (render-file "bantu/anki/failed.html" {})})))
+  (try (let [response (connect)]
+         {:body (render-file "bantu/anki/success.html"
+                             {:anki-connect-ver (:body response)})})
+       (catch Exception e
+         {:body (render-file "bantu/anki/failed.html"
+                             {:reason (-> e Throwable->map :cause)})})))
 
