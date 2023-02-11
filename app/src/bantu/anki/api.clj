@@ -1,6 +1,6 @@
 (ns bantu.anki.api
   (:require [babashka.curl :as curl]
-            [clojure.core.async :refer [thread]]
+            [clojure.core.async :refer [alt! chan close! thread timeout]]
             [org.httpkit.server :refer [as-channel send!]]
             [selmer.parser :refer [render-file]]))
 
@@ -25,15 +25,17 @@
                              {:reason (-> e Throwable->map :cause)})})))
 
 (def anki-session (atom nil))
+(def clipboard-watcher (atom nil))
 
-(defn clipboard-watcher []
-  (thread
-    (loop [i 0]
-      (when-let [anki-session @anki-session]
-        (send! anki-session 
-               {:body (str "<div id='anki-counter'>" i "</div>")})
-        (Thread/sleep 200)
-        (recur (inc i))))))
+(defn watch-clipboard [ws-ch]
+  (let [exit-ch (chan)]
+    (thread
+      (loop [i 0 t-ch (timeout 200)]
+        (alt!
+          t-ch (do (send! ws-ch {:body (str "<div id='anki-counter'>" i "</div>")})
+                   (recur (inc i) (timeout 200)))
+          exit-ch nil)))
+    exit-ch))
 
 
 (defn anki-ws [req]
@@ -41,10 +43,12 @@
     (as-channel req
                 {:on-open  (fn [ch]
                              (println "[anki] on-open")
-                             (let [[previous-session _] (reset-vals! anki-session ch)]
-                               (when-not (nil? previous-session)
-                                 (clipboard-watcher))))
+                             (let [[prev-ws _] (reset-vals! anki-session ch)]
+                               (when-not (and (nil? prev-ws) (nil? @clipboard-watcher))
+                                 (reset! clipboard-watcher (watch-clipboard prev-ws)))))
                  :on-close (fn [_ status]
                              (println "[anki] on-close" status)
-                             (reset! anki-session nil))})
+                             (reset! anki-session nil)
+                             (let [[old-clip _] (reset-vals! clipboard-watcher nil)]
+                               (some-> old-clip close!)))})
     {:status 200 :body "<h1>tidak anki disini</h1>"}))
