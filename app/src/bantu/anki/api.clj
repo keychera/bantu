@@ -2,7 +2,7 @@
   (:require [babashka.curl :as curl]
             [babashka.process :refer [shell]]
             [clojure.core.async :refer [alt! chan close! thread timeout]]
-            [org.httpkit.server :refer [as-channel send!]] 
+            [org.httpkit.server :refer [as-channel send!]]
             [selmer.parser :refer [render-file]]))
 
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "bantu/anki/anki.html" {}))
@@ -25,20 +25,25 @@
          {:body (render-file "bantu/anki/failed.html"
                              {:reason (-> e Throwable->map :cause)})})))
 
-(def anki-session (atom nil))
-(def clipboard-watcher (atom nil))
+(defonce anki-session (atom nil))
+(defonce clipboard-watcher (atom nil))
 
 (defn read-clipboard []
-  (-> (shell {:out :string } "powershell clipboard") :out))
+  (-> (shell {:out :byte} "powershell clipboard") :out
+      (slurp :encoding "UTF-8")))
 
 (defn watch-clipboard [ws-ch]
   (let [exit-ch (chan)]
     (thread
-      (loop [i 0 t-ch (timeout 200)]
+      (loop [i 0 last-clip (read-clipboard) t-ch (timeout 200)]
         (alt!
-          t-ch (do (send! ws-ch {:body (str "<div id='anki-counter'>" (read-clipboard) "</div>")})
-                   (recur (inc i) (timeout 200)))
-          exit-ch nil)))
+          exit-ch nil
+          t-ch (let [clip (read-clipboard)]
+                 (when-not (= clip last-clip)
+                   (println "sending clip =>" (str clip))
+                   (send! ws-ch
+                          {:body (render-file "bantu/anki/input.html" {:value clip})}))
+                 (recur (inc i) clip (timeout 200))))))
     exit-ch))
 
 
