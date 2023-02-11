@@ -2,6 +2,8 @@
   (:require [babashka.curl :as curl]
             [selmer.parser :refer [render-file]]))
 
+(defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "bantu/anki/anki.html" {}))
+
 ;; https://foosoft.net/projects/anki-connect/
 (defonce anki-connect "localhost:8765")
 
