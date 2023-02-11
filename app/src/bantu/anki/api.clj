@@ -1,6 +1,6 @@
 (ns bantu.anki.api
   (:require [babashka.curl :as curl]
-            [babashka.process :refer [shell]]
+            [babashka.process :refer [pb pipeline process shell]]
             [clojure.core.async :refer [alt! chan close! thread timeout]]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel send!]]
@@ -29,14 +29,13 @@
 (defonce anki-session (atom nil))
 (defonce clipboard-watcher (atom nil))
 
-
-(def clip-cmd (condp #(str/includes? %1 (some->> %2 (remove #{\ }) (apply str) str/lower-case)) (System/getProperty "os.name")
-                     "macosx" "pbpaste"
-                     "windows" "powershell clipboard"))
+(def clip-cmd (condp #(str/includes? (some->> %2 (remove #{\ }) (apply str) str/lower-case) %1) (System/getProperty "os.name")
+                "macos" "pbpaste"
+                ;; in Windows, need to enable beta setting to make system use UTF-8
+                "windows" "powershell clipboard"))
 
 (defn read-clipboard []
-  (-> (shell {:out :byte} clip-cmd) :out
-      (slurp :encoding "UTF-8")))
+  (-> (shell {:out :string} clip-cmd) :out))
 
 (defn watch-clipboard [ws-ch]
   (let [exit-ch (chan)]
@@ -46,7 +45,7 @@
           exit-ch nil
           t-ch (let [clip (read-clipboard)]
                  (when-not (= clip last-clip)
-                   (println "sending clip =>" (str clip))
+                   (println "sending clip =>" clip)
                    (send! ws-ch
                           {:body (render-file "bantu/anki/input.html" {:value clip})}))
                  (recur (inc i) clip (timeout 200))))))
