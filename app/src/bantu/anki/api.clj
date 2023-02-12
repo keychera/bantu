@@ -29,7 +29,7 @@
          {:body (render-file "bantu/anki/failed.html"
                              {:reason (-> e Throwable->map :cause)})})))
 (defn query [input]
-  (let [sanitized (->> input (str/trim) (str/trim-newline) 
+  (let [sanitized (->> input (str/trim) (str/trim-newline)
                        (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str))]
     (-> (curl/get anki-connect
                   {:headers {"Content-Type" "application/json; charset=utf-8"}
@@ -49,7 +49,6 @@
     (render-file "bantu/anki/result.html" {:word-field word-search
                                            :any-field any-search})))
 
-(defonce anki-session (atom nil))
 (defonce clipboard-watcher (atom nil))
 
 (def clip-cmd (condp #(str/includes? (some->> %2 (remove #{\ }) (apply str) str/lower-case) %1) (System/getProperty "os.name")
@@ -61,11 +60,12 @@
   (-> (shell {:out :string} clip-cmd) :out))
 
 (defn watch-clipboard [ws-ch]
+  (println "watching clipboard...")
   (let [exit-ch (chan)]
     (thread
       (loop [i 0 last-clip (read-clipboard) t-ch (timeout 200)]
         (alt!
-          exit-ch nil
+          exit-ch (println "stopped watching clipboard...")
           t-ch (let [clip (read-clipboard)]
                  (when-not (= clip last-clip)
                    (println "searching clip =>" clip)
@@ -80,14 +80,12 @@
     (as-channel req
                 {:on-open  (fn [ch]
                              (println "[anki] on-open")
-                             (let [[prev-ws _] (reset-vals! anki-session ch)]
-                               (when-not (and (nil? prev-ws) (nil? @clipboard-watcher))
-                                 (reset! clipboard-watcher (watch-clipboard prev-ws)))))
+                             (let [[prev-watcher _] (reset-vals! clipboard-watcher (watch-clipboard ch))]
+                               (some-> prev-watcher close!)))
                  :on-close (fn [_ status]
                              (println "[anki] on-close" status)
-                             (reset! anki-session nil)
-                             (let [[old-clip _] (reset-vals! clipboard-watcher nil)]
-                               (some-> old-clip close!)))})
+                             (let [[prev-watcher _] (reset-vals! clipboard-watcher nil)]
+                               (some-> prev-watcher close!)))})
     {:status 200 :body "<h1>tidak anki disini</h1>"}))
 
 (defn anki-search [req]
