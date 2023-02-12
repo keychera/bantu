@@ -1,4 +1,5 @@
 (ns panas.reload
+  (:import (java.nio.file Path))
   (:require [babashka.nrepl.server :as nrepl]
             [babashka.pods :as pods]
             [bantu.bantu :as bantu]
@@ -94,7 +95,7 @@
   (let [to-embed (-> server-to-embed panas-middleware)]
     (run-server to-embed {:port port :thread 12})))
 
-(def app-dir (some-> (io/resource "pivot") .toURI (.resolve "../app") .toString (subs 6)))
+(def app-dir (some-> (io/resource "pivot") .toURI (.resolve "../app") (Path/of) .toString))
 
 (defn -main [& _]
   ;; the symbol #' is still mysterious, without that, hot reload doesn't work on router changes
@@ -104,7 +105,7 @@
     (start-panasin router)
     (println "[panas] watching" app-dir)
     (let [latest-event (atom nil)
-          event-handler (fn [event]
+          event-handler (fn [event] 
                           (when (= :write (:type event))
                             (println "======")
                             (try

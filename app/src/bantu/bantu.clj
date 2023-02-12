@@ -1,6 +1,6 @@
 (ns bantu.bantu
-  (:require [bantu.anki.api :refer [connect-anki]]
-            [bantu.fn.ui :refer [execute-fn fn-list-ui fn-ui]]
+  (:require [bantu.anki.api :refer [anki anki-search anki-ws connect-anki]]
+            [bantu.fn.ui :refer [execute-fn fn-list-ui fn-page fn-ui]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
             [clojure.string :as str]
@@ -11,10 +11,6 @@
 
 ;; components
 (defn ^{:sidebar "hello" :title "Hello"} hello [] "hello")
-(defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "bantu/anki/connect.html" {}))
-(defn ^{:sidebar "doc"} intro [] "intro")
-(defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "fn()"}
-  fn-page [] (fn-list-ui 'funrepo.fns))
 
 ;; engine
 (defn render-sidebars [selected]
@@ -38,14 +34,16 @@
     (match [verb paths]
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route #'hello)
+      
       [:get ["anki"]] (route #'anki)
-      [:get ["doc" "intro"]] (route #'intro)
+      [:get ["anki-ws"]] (anki-ws req)
       
       [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
       [:post ["fn" ns-val name]] (execute-fn req ns-val name)
       
       [:post ["connect-anki"]] (connect-anki req)
+      [:post ["anki-search"]] (anki-search req)
 
       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))

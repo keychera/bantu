@@ -3,12 +3,13 @@
 <head>
     <link href="/css/style.css" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+    <script src="https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.7"></script>
 </head>
 
 <body class="flex flex-row w-screen">
-    <div id="wrapper" class="w-full h-fit grid grid-cols-[6rem_auto]">
-        <div id="header" class="col-span-2 px-5 pt-4 pb-2 bg-slate-300">
+    <div id="wrapper" class="w-full h-full grid grid-rows-[4rem_auto] grid-cols-[6rem_auto]">
+        <div id="header" class="row-span-1 col-span-2 px-5 pt-4 pb-2 bg-slate-300">
             <a href="/" class="text-xl">bantu</a>
         </div>
         <aside id="sidebar" class="px-4 py-2">
@@ -16,7 +17,7 @@
                 {{render-sidebars|safe}}
             </div>
         </aside>
-        <div id="main" class="p-5 h-screen bg-gray-100">
+        <div id="main" class=" p-5 h-full bg-gray-100">
             {% if render-main %} {{render-main|safe}}
             {% else %} <h1>Landing</h1>
             {% endif %}

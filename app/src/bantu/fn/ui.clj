@@ -15,6 +15,9 @@
       (let [cause (-> e Throwable->map :cause)]
         (str "<p>" cause "</p>")))))
 
+(defn ^{:sidebar "fn" :url "fn/funrepo.fns" :title "(fn)"}
+  fn-page [] (fn-list-ui 'funrepo.fns))
+
 (defn- fn-ref [ns-symbol-str ref-string]
   (let [ref (read-string ref-string)
         ns-symbol (read-string ns-symbol-str)]
