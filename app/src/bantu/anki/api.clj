@@ -41,11 +41,13 @@
   (str number " " unit (when-not (= number 1) "s")))
 
 (defn relevant-search-html [word]
-  (let [sanitized-word (->> word str/trim str/trim-newline (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str))
-        word-search (-> (render "word:*{{word}}*" {:word sanitized-word}) query count (count-unit "card"))
-        any-search (-> sanitized-word query count (count-unit "card"))]
-    (render-file "bantu/anki/result.html" {:word-field word-search
-                                           :any-field any-search})))
+  (let [size (count word)
+        sanitized-word (when (> size 0)
+                         (->> word str/trim str/trim-newline (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str)))
+        word-search (some->> sanitized-word (assoc {} :word) (render "word:*{{word}}*") query count)
+        any-search (some->> sanitized-word query count)]
+    (render-file "bantu/anki/result.html" {:word-field (count-unit (or word-search 0) "card")
+                                           :any-field (count-unit (or any-search 0) "card")})))
 
 (defonce clipboard-watcher (atom nil))
 
