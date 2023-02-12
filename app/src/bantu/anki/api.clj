@@ -29,23 +29,21 @@
          {:body (render-file "bantu/anki/failed.html"
                              {:reason (-> e Throwable->map :cause)})})))
 (defn query [input]
-  (let [sanitized (->> input (str/trim) (str/trim-newline)
-                       (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str))]
-    (-> (curl/get anki-connect
-                  {:headers {"Content-Type" "application/json; charset=utf-8"}
-                   :body (json/generate-string
-                          {:action "findNotes"
-                           :params {:query (str "deck:current " sanitized)}})
-                   :compressed false})
-        :body edn/read-string)))
+  (-> (curl/get anki-connect
+                {:headers {"Content-Type" "application/json; charset=utf-8"}
+                 :body (json/generate-string
+                        {:action "findNotes"
+                         :params {:query (str "deck:current " input)}})
+                 :compressed false})
+      :body edn/read-string))
 
 (defn count-unit [number unit]
   (str number " " unit (when-not (= number 1) "s")))
 
 (defn relevant-search-html [word]
-  (let [word (-> word str/trim-newline)
-        word-search (-> (render "word:*{{word}}*" {:word word}) query count (count-unit "card"))
-        any-search (-> word query count (count-unit "card"))]
+  (let [sanitized-word (->> word str/trim str/trim-newline (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str))
+        word-search (-> (render "word:*{{word}}*" {:word sanitized-word}) query count (count-unit "card"))
+        any-search (-> sanitized-word query count (count-unit "card"))]
     (render-file "bantu/anki/result.html" {:word-field word-search
                                            :any-field any-search})))
 
