@@ -1,7 +1,9 @@
 (ns bantu.anki.api
   (:require [babashka.curl :as curl]
-            [babashka.process :refer [pb pipeline process shell]]
+            [babashka.process :refer [shell]]
+            [cheshire.core :as json]
             [clojure.core.async :refer [alt! chan close! thread timeout]]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel send!]]
             [selmer.parser :refer [render-file]]))
@@ -25,6 +27,13 @@
        (catch Exception e
          {:body (render-file "bantu/anki/failed.html"
                              {:reason (-> e Throwable->map :cause)})})))
+(defn query [input]
+  (curl/get anki-connect
+            {:headers {"Content-Type" "application/json; charset=utf-8"}
+             :body (json/generate-string
+                    {:action "findNotes"
+                     :params {:query (str "deck:current " (some->> input (str/trim-newline)))}})
+             :compressed false}))
 
 (defonce anki-session (atom nil))
 (defonce clipboard-watcher (atom nil))
@@ -45,9 +54,11 @@
           exit-ch nil
           t-ch (let [clip (read-clipboard)]
                  (when-not (= clip last-clip)
-                   (println "sending clip =>" clip)
-                   (send! ws-ch
-                          {:body (render-file "bantu/anki/input.html" {:value clip})}))
+                   (println "searching clip =>" clip)
+                   (let [search-via-clip (query clip)]
+                     (send! ws-ch
+                            {:body (str/join [(render-file "bantu/anki/input.html" {:value clip})
+                                              (render-file "bantu/anki/result.html" {:value search-via-clip})])})))
                  (recur (inc i) clip (timeout 200))))))
     exit-ch))
 
@@ -66,3 +77,12 @@
                              (let [[old-clip _] (reset-vals! clipboard-watcher nil)]
                                (some-> old-clip close!)))})
     {:status 200 :body "<h1>tidak anki disini</h1>"}))
+
+(defn anki-search [req]
+  (let [payload (some-> req :body (io/reader :encoding "UTF-8") slurp)
+        search-query (some-> payload (str/split #"=") ;; assuming only one param
+                             (some->> (map #(java.net.URLDecoder/decode %)) last))]
+    (println "responding query => " search-query)
+    (when-not (nil? search-query)
+      (-> (query search-query)
+          (as-> it {:body (str "<div id=\"anki-result\">"  it "</div>")})))))

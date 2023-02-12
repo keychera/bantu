@@ -1,5 +1,5 @@
 (ns bantu.bantu
-  (:require [bantu.anki.api :refer [anki anki-ws connect-anki]]
+  (:require [bantu.anki.api :refer [anki anki-search anki-ws connect-anki]]
             [bantu.fn.ui :refer [execute-fn fn-list-ui fn-page fn-ui]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
@@ -43,6 +43,7 @@
       [:post ["fn" ns-val name]] (execute-fn req ns-val name)
       
       [:post ["connect-anki"]] (connect-anki req)
+      [:post ["anki-search"]] (anki-search req)
 
       [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))

@@ -6,12 +6,7 @@
         </div>
     </div> -->
     <div class="w-full" hx-ext="ws" ws-connect="/anki-ws">
-        <input id="text-source" class="w-full mb-4 p-2 rounded-md text-white bg-gray-800" placeholder="Input for anki">
-
-        </input>
-        <div id="anki-result" class="p-2 rounded-md bg-gray-200">
-
-        </div>
-        <div id="anki-counter"></div>
+        {% include "bantu/anki/input.html" %}
+        {% include "bantu/anki/result.html" %}
     </div>
 </div>

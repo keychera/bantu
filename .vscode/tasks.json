@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "repl",
+            "label": "watch server",
             "type": "shell",
             "command": "bb panas.reload",
             "problemMatcher": []

@@ -1,4 +1,6 @@
-<input id="text-source" value="{{value}}" placeholder="Input for anki"
-class="w-full mb-4 p-2 rounded-md text-white bg-gray-800">
-
-</input>
+<input id="text-source" type="search" name="query"
+       value="{{value}}" placeholder="Input for anki"
+       hx-post="/anki-search"
+       hx-trigger="keyup changed delay:500ms, search, new-clip from:body"
+       hx-target="#anki-result"
+       class="w-full mb-4 p-2 rounded-md text-white bg-gray-800"></input>
