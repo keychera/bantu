@@ -29,12 +29,15 @@
          {:body (render-file "bantu/anki/failed.html"
                              {:reason (-> e Throwable->map :cause)})})))
 (defn query [input]
-  (-> (curl/get anki-connect
-                {:headers {"Content-Type" "application/json; charset=utf-8"}
-                 :body (json/generate-string
-                        {:action "findNotes"
-                         :params {:query (str "deck:current " input)}})
-                 :compressed false}) :body edn/read-string))
+  (let [sanitized (->> input (str/trim) (str/trim-newline) 
+                       (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str))]
+    (-> (curl/get anki-connect
+                  {:headers {"Content-Type" "application/json; charset=utf-8"}
+                   :body (json/generate-string
+                          {:action "findNotes"
+                           :params {:query (str "deck:current " sanitized)}})
+                   :compressed false})
+        :body edn/read-string)))
 
 (defn count-unit [number unit]
   (str number " " unit (when (= number 1) "s")))
