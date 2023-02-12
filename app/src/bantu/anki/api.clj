@@ -40,7 +40,7 @@
         :body edn/read-string)))
 
 (defn count-unit [number unit]
-  (str number " " unit (when (= number 1) "s")))
+  (str number " " unit (when-not (= number 1) "s")))
 
 (defn relevant-search-html [word]
   (let [word (-> word str/trim-newline)
