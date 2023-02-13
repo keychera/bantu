@@ -42,7 +42,7 @@
 
 (defn relevant-search-html [word]
   (let [size (count word)
-        sanitized-word (when (> size 0)
+        sanitized-word (when (and (> size 0) (< size 64))
                          (->> word str/trim str/trim-newline (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str)))
         word-search (some->> sanitized-word (assoc {} :word) (render "word:*{{word}}*") query count)
         any-search (some->> sanitized-word query count)]
