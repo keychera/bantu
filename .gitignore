@@ -4,3 +4,6 @@
 .calva
 
 tailwindcss*
+
+.DS_Store
+out
