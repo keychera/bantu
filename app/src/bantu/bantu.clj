@@ -15,7 +15,7 @@
 
 ;; engine
 (defn render-sidebars [selected]
-  (->> [#'hello #'anki #'fn-page]
+  (->> [#'hello #'anki #'fn-page #'graph]
        (map (fn [handler]
               (let [{:keys [sidebar url title]} (meta handler)]
                 (render-file "bantu/sidebar.html" {:url (or url sidebar) :title title :selected (= sidebar selected)}))))
