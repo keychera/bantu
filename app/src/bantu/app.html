@@ -20,12 +20,13 @@
         </aside>
         <div id="main" class=" p-5 h-full bg-gray-100">
             {% if render-main %} {{render-main|safe}}
-            {% else %} <h1>Landing</h1>
-            {% endif %}
+            {% else %}
+            <h1>Landing</h1>
             <div id="a-counter">0</div>
             <button class="p-2 bg-slate-300" onclick="add_counter()">
                 Click me!
             </button>
+            {% endif %}
         </div>
     </div>
 
