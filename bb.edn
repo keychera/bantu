@@ -1,5 +1,7 @@
 {:paths ["app/src" "app/html" "resources"]
  :pods {retrogradeorbit/bootleg {:version "0.1.9"}}
  :tasks {serve {:task serve/-main}
-         panas.reload {:extra-paths ["devtool"]
-                       :task panas.reload/-main}}}
+         panas.reload {:extra-deps {io.github.keychera/panas.reload {:git/sha "e7543edbd956b5913dbe0fbf7d7f6265d325f909"}}
+                       :requires ([panas.reload])
+                       :task (panas.reload/-main 'bantu.bantu/router 
+                                                 {:url "localhost" :port 42042})}}}

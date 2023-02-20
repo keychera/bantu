@@ -63,7 +63,8 @@
   (println "watching clipboard...")
   (let [exit-ch (chan)]
     (thread
-      (loop [i 0 last-clip (read-clipboard) t-ch (timeout 200)]
+      (loop [i 0 last-clip (read-clipboard) #_"first clip is to prevent copy on page open"
+             t-ch (timeout 200)]
         (alt!
           exit-ch (println "stopped watching clipboard...")
           t-ch (let [clip (read-clipboard)]
