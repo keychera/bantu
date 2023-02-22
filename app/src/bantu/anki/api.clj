@@ -63,16 +63,16 @@
   (println "watching clipboard...")
   (let [exit-ch (chan)]
     (thread
-      (loop [i 0 last-clip (read-clipboard) #_"first clip is to prevent copy on page open"
+      (loop [last-clip (read-clipboard) #_"first clip is to prevent copy on page open"
              t-ch (timeout 200)]
         (alt!
           exit-ch (println "stopped watching clipboard...")
-          t-ch (let [clip (read-clipboard)]
+          t-ch (let [clip (try (read-clipboard) (catch Throwable e (println "[anki][ERROR!]" (.getCause e)) nil))]
                  (when-not (= clip last-clip)
                    (println "searching clip =>" clip)
                    (send! ws-ch {:body (str/join [(render-file "bantu/anki/input.html" {:value clip})
                                                   (relevant-search-html clip)])}))
-                 (recur (inc i) clip (timeout 200))))))
+                 (recur clip (timeout 200))))))
     exit-ch))
 
 
