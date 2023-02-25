@@ -3,8 +3,8 @@
 <head>
     <link href="/css/style.css" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.8.4"></script>
-    <script src="https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"></script>
-    <script src="https://unpkg.com/hyperscript.org@0.9.7"></script>
+    <script defer src="https://unpkg.com/htmx.org@1.8.4/dist/ext/ws.js"></script>
+    <script defer src="https://unpkg.com/hyperscript.org@0.9.7"></script>
 </head>
 
 <body class="flex flex-row w-screen">
@@ -13,16 +13,30 @@
             <a href="/" class="text-xl">bantu</a>
         </div>
         <aside id="sidebar" class="px-4 py-2">
-            <div hx-sync="this:replace" _="on htmx:afterOnLoad take .selected-sidebar for event.target">
+            <div hx-sync="this:replace"
+                 _="on htmx:afterOnLoad take .selected-sidebar for event.target">
                 {{render-sidebars|safe}}
             </div>
         </aside>
         <div id="main" class=" p-5 h-full bg-gray-100">
             {% if render-main %} {{render-main|safe}}
-            {% else %} <h1>Landing</h1>
+            {% else %}
+            <h1>Landing</h1>
+            <div id="a-counter">0</div>
+            <button class="p-2 bg-slate-300" onclick="add_counter()">
+                Click me!
+            </button>
             {% endif %}
         </div>
     </div>
+
+    <script>
+        function add_counter() {
+            let counter = document.getElementById("a-counter")
+            let prev = parseInt(counter.textContent)
+            counter.textContent = prev + 1
+        }
+    </script>
 </body>
 
 </html>
