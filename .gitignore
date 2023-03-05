@@ -2,6 +2,7 @@
 .clj-kondo/*
 !.clj-kondo/config.edn
 .calva
+.cpcache
 
 tailwindcss*
 

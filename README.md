@@ -1,3 +1,3 @@
 # bantu
 
-a local helper
+a local helper, installable by bbin
