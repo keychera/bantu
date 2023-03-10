@@ -1,2 +1,7 @@
 {:deps {io.github.keychera/bantu {:local/root "."}}
- :bbin/bin {bantu {:main-opts ["-m" "serve"]}}}
+ :bbin/bin {bantu {:main-opts ["-m" "serve"]}}
+ :tasks {serve {:task serve/-main}
+         panas.reload {:extra-deps {io.github.keychera/panas.reload {:git/sha "a210d4539472ac462ca6f8194144ba7bb245c1a0"}}
+                       :requires ([panas.reload])
+                       :task (panas.reload/-main 'bantu.bantu/router
+                                                 {:url "localhost" :port 4242})}}}
