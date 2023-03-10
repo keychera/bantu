@@ -29,22 +29,20 @@
          {:body (render-file "bantu/anki/failed.html"
                              {:reason (-> e Throwable->map :cause)})})))
 (defn query [input]
-  (-> (curl/get anki-connect
-                {:headers {"Content-Type" "application/json; charset=utf-8"}
-                 :body (json/generate-string
-                        {:action "findNotes"
-                         :params {:query (str "deck:current " input)}})
-                 :compressed false})
-      :body edn/read-string))
+  (try (-> (curl/get anki-connect
+                     {:headers {"Content-Type" "application/json; charset=utf-8"}
+                      :body (json/generate-string
+                             {:action "findNotes"
+                              :params {:query (str "deck:current " input)}})
+                      :compressed false})
+           :body edn/read-string)
+       (catch Throwable e (println "[anki][ERROR]" (-> e Throwable->map :cause)))))
 
 (defn count-unit [number unit]
   (str number " " unit (when-not (= number 1) "s")))
 
-(defn relevant-search-html [word]
-  (let [size (count word)
-        sanitized-word (when (and (> size 0) (< size 64))
-                         (->> word str/trim str/trim-newline (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str)))
-        word-search (some->> sanitized-word (assoc {} :word) (render "word:*{{word}}*") query count)
+(defn relevant-search-html [sanitized-word]
+  (let [word-search (some->> sanitized-word (assoc {} :word) (render "word:*{{word}}*") query count)
         any-search (some->> sanitized-word query count)]
     (render-file "bantu/anki/result.html" {:word-field (count-unit (or word-search 0) "card")
                                            :any-field (count-unit (or any-search 0) "card")})))
@@ -57,18 +55,22 @@
                 "windows" "powershell clipboard"))
 
 (defn read-clipboard []
-  (-> (shell {:out :string} clip-cmd) :out))
+  (try (-> (shell {:out :string} clip-cmd) :out)
+       (catch Throwable e (println "[anki][ERROR]" (-> e Throwable->map :cause)))))
+
+(defn sanitize [word]
+  (->> word str/trim str/trim-newline (remove #{\" \' \: \; \{ \} \( \) \[ \] \/ \\}) (apply str)))
 
 (defn watch-clipboard [ws-ch]
   (println "watching clipboard...")
   (let [exit-ch (chan)]
     (thread
-      (loop [last-clip (read-clipboard) #_"first clip is to prevent copy on page open"
-             t-ch (timeout 200)]
+      (loop [last-clip :begin t-ch (timeout 200)]
         (alt!
           exit-ch (println "stopped watching clipboard...")
-          t-ch (let [clip (try (read-clipboard) (catch Throwable e (println "[anki][ERROR!]" (.getCause e)) nil))]
-                 (when-not (= clip last-clip)
+          t-ch (let [clip (-> (read-clipboard) sanitize)
+                     size (count clip)]
+                 (when (and (not= last-clip :begin) (and (> size 0) (< size 64)) (not= clip last-clip))
                    (println "searching clip =>" clip)
                    (send! ws-ch {:body (str/join [(render-file "bantu/anki/input.html" {:value clip})
                                                   (relevant-search-html clip)])}))
