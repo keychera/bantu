@@ -27,23 +27,38 @@
       (let [{:keys [sidebar]} (meta handler)]
         {:body (app (apply handler args) {:render-sidebars (render-sidebars sidebar)})})))
 
-(defn router [req]
+(defn app-router [req]
   (let [paths (some-> (:uri req) (str/split #"/") rest vec)
         verb (:request-method req)
         route (partial sidebar-route (part? req))]
     (match [verb paths]
       [:get []] {:body (app nil {:render-sidebars (render-sidebars nil)})}
       [:get ["hello"]] (route #'hello)
-      
+
+      [:get ["hmm"]] {:body "読み"}
       [:get ["anki"]] (route #'anki)
       [:get ["anki-ws"]] (anki-ws req)
-      
+
       [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
       [:post ["fn" ns-val name]] (execute-fn req ns-val name)
-      
+
       [:post ["connect-anki"]] (connect-anki req)
       [:post ["anki-search"]] (anki-search req)
 
-      [:get ["css" "style.css"]] {:body (slurp (io/resource "public/css/style.css"))}
+      [:get ["css" "style.css"]] {:headers {"Content-Type" "text/css"}
+                                  :body (slurp (io/resource "public/css/style.css"))}
       :else {:status 404 :body "not found"})))
+
+(defn wrap-content-type [handler]
+  (fn [req]
+    (let [res (handler req)]
+      (update res :headers
+              #(do
+                 (println %)
+                 (if-not (contains? % "Content-Type")
+                   (assoc % "Content-Type" "text/html; charset=utf-8")
+                   %))))))
+
+(def router (-> app-router
+                wrap-content-type))
