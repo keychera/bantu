@@ -1,5 +1,5 @@
 (ns bantu.bantu
-  (:require [bantu.anki.api :refer [anki anki-search anki-ws connect-anki]]
+  (:require [bantu.anki.api :as anki]
             [bantu.fn.ui :refer [execute-fn fn-list-ui fn-page fn-ui]]
             [clojure.core.match :refer [match]]
             [clojure.java.io :as io]
@@ -14,7 +14,7 @@
 
 ;; engine
 (defn render-sidebars [selected]
-  (->> [#'hello #'anki #'fn-page]
+  (->> [#'hello #'anki/anki #'fn-page]
        (map (fn [handler]
               (let [{:keys [sidebar url title]} (meta handler)]
                 (render-file "bantu/sidebar.html" {:url (or url sidebar) :title title :selected (= sidebar selected)}))))
@@ -36,15 +36,16 @@
       [:get ["hello"]] (route #'hello)
 
       [:get ["hmm"]] {:body "読み"}
-      [:get ["anki"]] (route #'anki)
-      [:get ["anki-ws"]] (anki-ws req)
+      [:get ["anki"]] (route #'anki/anki)
+      [:get ["anki-ws"]] (anki/anki-ws req)
 
       [:get ["fn" ns-val]] (route #'fn-list-ui (symbol ns-val))
       [:get ["fn" ns-val name]] (route #'fn-ui (str "#'" ns-val "/" name))
       [:post ["fn" ns-val name]] (execute-fn req ns-val name)
 
-      [:post ["connect-anki"]] (connect-anki req)
-      [:post ["anki-search"]] (anki-search req)
+      [:post ["connect-anki"]] (anki/connect-anki req)
+      [:post ["anki-search"]] (anki/search req)
+      [:post ["anki-search-gui"]] (anki/search-gui req)
 
       [:get ["css" "style.css"]] {:headers {"Content-Type" "text/css"}
                                   :body (slurp (io/resource "public/css/style.css"))}
@@ -54,11 +55,8 @@
   (fn [req]
     (let [res (handler req)]
       (update res :headers
-              #(do
-                 (println %)
-                 (if-not (contains? % "Content-Type")
-                   (assoc % "Content-Type" "text/html; charset=utf-8")
-                   %))))))
+              #(if (contains? % "Content-Type") %
+                   (assoc % "Content-Type" "text/html; charset=utf-8"))))))
 
 (def router (-> app-router
                 wrap-content-type))

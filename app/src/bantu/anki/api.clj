@@ -7,7 +7,7 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [org.httpkit.server :refer [as-channel send!]]
-            [selmer.parser :refer [render render-file]]))
+            [selmer.parser :refer [render-file]]))
 
 (defn ^{:sidebar "anki" :title "Anki"} anki [] (render-file "bantu/anki/anki.html" {}))
 
@@ -42,9 +42,12 @@
   (str number " " unit (when-not (= number 1) "s")))
 
 (defn relevant-search-html [sanitized-word]
-  (let [word-search (some->> sanitized-word (assoc {} :word) (render "word:*{{word}}*") query count)
-        any-search (some->> sanitized-word query count)]
-    (render-file "bantu/anki/result.html" {:word-field (count-unit (or word-search 0) "card")
+  (let [word-query (str "word:*" sanitized-word "*")
+        word-search (some-> (query word-query) count)
+        any-search (some-> (query sanitized-word) count)]
+    (render-file "bantu/anki/result.html" {:word-query word-query
+                                           :word-field (count-unit (or word-search 0) "card")
+                                           :any-query sanitized-word
                                            :any-field (count-unit (or any-search 0) "card")})))
 
 (defonce clipboard-watcher (atom nil))
@@ -91,10 +94,31 @@
                                (some-> prev-watcher close!)))})
     {:status 200 :body "<h1>tidak anki disini</h1>"}))
 
-(defn anki-search [req]
+(defn search [req]
   (let [payload (some-> req :body (io/reader :encoding "UTF-8") slurp)
         search-query (some-> payload (str/split #"=") ;; assuming only one param
                              (some->> (map #(java.net.URLDecoder/decode %)) last))]
     (println "responding query => " search-query)
     (when-not (nil? search-query)
       {:body (relevant-search-html search-query)})))
+
+
+(defn gui-query [input]
+  (try (-> (curl/get anki-connect
+                     {:headers {"Content-Type" "application/json; charset=utf-8"}
+                      :body (json/generate-string
+                             {:action "guiBrowse"
+                              :version 6
+                              :params {:query (str "deck:current " input)}})
+                      :compressed false}))
+       (catch Throwable e (println "[anki][ERROR]" (-> e Throwable->map)))))
+
+(defn search-gui [req]
+  (let [payload (some-> req :body (io/reader :encoding "UTF-8") slurp)
+        search-query (some-> payload (str/split #"=") ;; assuming only one param, param name is ignored
+                             (some->> (map #(java.net.URLDecoder/decode %)) last))]
+    (gui-query search-query)))
+
+(comment
+  (query "ナヒーダ")
+  (gui-query "ナヒーダ"))

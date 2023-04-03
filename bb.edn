@@ -4,4 +4,5 @@
          panas.reload {:extra-deps {io.github.keychera/panas.reload {:git/sha "6324f8eafc02162a3580798df508bacba8d629bf"}}
                        :requires ([panas.reload] bantu.bantu)
                        :task (panas.reload/-main (var bantu.bantu/router)
-                                                 {:url "localhost" :port 4242})}}}
+                                                 {:url "localhost" :port 4242}
+                                                 {:watch-dir "app"})}}}

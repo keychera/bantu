@@ -3,19 +3,14 @@
     <pre class="mt-2 ml-2 py-1 px-3 w-fit rounded-md border-2 border-gray-500">Deck:main</pre>
     <div class="flex flex-row py-3 items-center">
         <div class="py-1 px-3 w-32 border-gray-500">in word field</div>
-        <div class="py-1 px-3 h-8 w-fit rounded-md bg-white">{{word-field}}</div>
-        <div class="relative w-5 h-5 ml-2 bg-gray-500 rounded-md">
-            <div class="absolute space-y-1 px-4 py-2 bg-white rounded-md">
-                <p>読み</p>
-                <p>tag</p>
-                <p>small image</p>
-            </div>
-        </div>
-        <div class="w-5 h-5 ml-2 rounded-md bg-gray-500"></div>
-        <div class="w-5 h-5 ml-2 rounded-md bg-gray-500"></div>
+        <input type="hidden" id="word-query" name="word-query"  value="{{word-query}}" />
+        <div hx-post="/anki-search-gui" hx-swap="none" hx-include="#word-query"
+             class="py-1 px-3 h-8 w-fit rounded-md bg-white hover:shadow-lg cursor-pointer">{{word-field}}</div>
     </div>
     <div class="flex flex-row py-3 items-center">
         <div class="py-1 px-3 w-32 border-gray-500">in any field</div>
-        <div class="py-1 px-3 h-8 w-fit rounded-md bg-white">{{any-field}}</div>
+        <input type="hidden" id="any-query" name="any-query" value="{{any-query}}" />
+        <div hx-post="/anki-search-gui" hx-swap="none" hx-include="#any-query"
+             class="py-1 px-3 h-8 w-fit rounded-md bg-white hover:shadow-lg cursor-pointer">{{any-field}}</div>
     </div>
 </div>
