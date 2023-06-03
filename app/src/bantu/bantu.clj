@@ -49,6 +49,8 @@
 
       [:get ["css" "style.css"]] {:headers {"Content-Type" "text/css"}
                                   :body (slurp (io/resource "public/css/style.css"))}
+      [:get ["favicon.png"]] {:headers {"Content-Type" "image/png"}
+                              :body (io/file (io/resource "public/books-ico.png"))}
       :else {:status 404 :body "not found"})))
 
 (defn wrap-content-type [handler]

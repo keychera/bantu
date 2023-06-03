@@ -1,8 +1,10 @@
 {:deps {io.github.keychera/bantu {:local/root "."}}
  :bbin/bin {bantu {:main-opts ["-m" "serve"]}}
  :tasks {serve {:task serve/-main}
-         panas.reload {:extra-deps {io.github.keychera/panas.reload {:git/sha "6324f8eafc02162a3580798df508bacba8d629bf"}}
-                       :requires ([panas.reload] bantu.bantu)
+         panas.reload {:extra-deps {io.github.keychera/panas.reload {:git/sha "3e3838d8f4482977a6bb204697fe85d7be118579"}}
+                       :requires ([panas.reload] [panas.default] bantu.bantu)
                        :task (panas.reload/-main (var bantu.bantu/router)
                                                  {:url "localhost" :port 4242}
-                                                 {:watch-dir "app"})}}}
+                                                 {:watch-dir "app"
+                                                  :reloadable? (every-pred (fn [{:keys [uri] :as req}] (not= uri "/favicon.ico"))
+                                                                           panas.default/reloadable?)})}}}
